@@ -91,3 +91,185 @@ For open source projects, say how it is licensed.
 
 ## Project status
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+
+## Local setup
+
+### 1. Clone the repository
+
+Clone the repository and open the project folder:
+
+```powershell
+git clone <repository-url>
+cd team4_placeholder
+```
+
+### 2. Create the environment file
+
+Copy the environment template:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+The `.env` file contains local credentials and must not be committed or pushed to Git.
+
+### 3. Start Rancher Desktop
+
+Open Rancher Desktop and wait until it is fully started.
+
+Docker Engine must be running. Kubernetes is not required for this project.
+
+Verify that Docker is available:
+
+```powershell
+docker --version
+docker compose version
+```
+
+### 4. Start PostgreSQL and pgAdmin
+
+Make sure you are in the project root, where `docker-compose.yaml` is located:
+
+```powershell
+docker compose -f docker-compose.yaml config
+```
+
+If no error is displayed, start the containers:
+
+```powershell
+docker compose -f docker-compose.yaml up -d
+```
+
+Check the container status:
+
+```powershell
+docker ps
+```
+
+The following containers should be running:
+
+```text
+safeflow-postgres
+safeflow-pgadmin
+```
+
+### 5. Access and configure pgAdmin
+
+Open pgAdmin in your browser:
+
+```text
+http://localhost:5050
+```
+
+You will see the pgAdmin login page.
+
+Use the values from your local `.env` file:
+
+```text
+Email: the value of PGADMIN_EMAIL
+Password: the value of PGADMIN_PASSWORD
+```
+
+For example:
+
+```text
+Email: admin@safeflow.dev
+Password: SafeFlowAdmin123
+```
+
+After logging in, register the PostgreSQL server:
+
+1. In the left panel, right-click **Servers**.
+2. Select **Register → Server**.
+3. In the **General** tab, enter:
+
+```text
+Name: SafeFlow PostgreSQL
+```
+
+4. Open the **Connection** tab and enter:
+
+```text
+Host name/address: postgres
+Port: 5432
+Maintenance database: safeflow
+Username: safeflow_user
+Password: the value of POSTGRES_PASSWORD from .env
+```
+
+5. Enable **Save password**.
+6. Click **Save**.
+
+Important: use `postgres` as the host name, not `localhost`.
+
+The pgAdmin and PostgreSQL containers communicate through the Docker network, where the PostgreSQL service is called `postgres`.
+
+After saving the connection, expand:
+
+```text
+Servers
+└── SafeFlow PostgreSQL
+    └── Databases
+        └── safeflow
+            └── Schemas
+                └── public
+                    └── Tables
+```
+
+Right-click **Tables** and select **Refresh** to see the database tables.
+
+The PostgreSQL database is available to applications running on the host machine at:
+
+```text
+localhost:5432
+```
+
+Other Docker containers connect to PostgreSQL using:
+
+```text
+postgres:5432
+```
+
+### 6. Install Python dependencies
+
+Activate the virtual environment and install the project dependencies:
+
+```powershell
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 7. Start the FastAPI backend
+
+```powershell
+cd backend
+python -m uvicorn app.main:app --reload
+```
+
+The API will be available at:
+
+```text
+http://127.0.0.1:8000
+```
+
+Swagger documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Health check:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+### 8. Stop the containers
+
+To stop the containers without deleting the database data:
+
+```powershell
+docker compose -f docker-compose.yaml down
+```
+
+Do not use `docker compose down -v` unless you intentionally want to delete the local database volumes.
