@@ -46,7 +46,7 @@ def get_label(file_path: Path) -> str:
 
     spam_folders = {
         "spam",
-        "spam_2"
+        "spam2"
     }
 
     if folder_names.intersection(legitimate_folders):
