@@ -8,70 +8,309 @@ import {
   CardContent,
   CircularProgress,
   Divider,
-  FormControlLabel,
   MenuItem,
   Stack,
-  Switch,
   TextField,
   Typography,
 } from '@mui/material'
-import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
+
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
+import { Link as RouterLink } from 'react-router'
 import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
-import { analyzePaymentMock } from '../services/riskService'
-import type { RiskAnalysisRequest, RiskAnalysisResult } from '../types'
+import { analyzePayment } from '../services/riskService'
 
-const initialSignals: RiskAnalysisRequest = {
-  is_new_beneficiary: 0,
-  is_unusually_large: 0,
-  recent_transaction_count: 0,
-  is_unusual_country: 0,
-  is_risky_payment_channel: 0,
+import type {
+  RecommendedAction,
+  RiskAnalysisResult,
+  RiskLevel,
+} from '../types'
+
+interface PaymentFormState {
+  amount: string
+  currency: string
+  date: string
+  beneficiary: string
+  country: string
+  paymentChannel: string
+  description: string
+}
+
+const initialForm: PaymentFormState = {
+  amount: '14500',
+  currency: 'USD',
+  date: new Date().toISOString().slice(0, 10),
+  beneficiary: 'Maxwell Okonkwo',
+  country: 'United Kingdom',
+  paymentChannel: 'Bank Transfer (SWIFT)',
+  description: 'Guaranteed 40% return investment — send now',
+}
+
+type PaymentFormErrors = Partial<
+  Record<keyof PaymentFormState, string>
+>
+
+function validatePaymentForm(form: PaymentFormState): PaymentFormErrors {
+  const errors: PaymentFormErrors = {}
+  const amount = Number(form.amount)
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    errors.amount = 'Enter an amount greater than 0.'
+  }
+
+  if (!form.date) {
+    errors.date = 'Select the payment date.'
+  }
+
+  if (form.beneficiary.trim().length < 2) {
+    errors.beneficiary = 'Enter the beneficiary name.'
+  }
+
+  if (form.country.trim().length < 2) {
+    errors.country = 'Enter the destination country.'
+  }
+
+  return errors
+}
+
+const actionConfig: Record<
+  RecommendedAction,
+  {
+    title: string
+    description: string
+    backgroundColor: string
+    borderColor: string
+    color: string
+  }
+> = {
+  BLOCK: {
+    title: 'Block transaction',
+    description:
+      'Block this payment and contact the account holder to verify the intent before releasing funds.',
+    backgroundColor: '#FFF1F1',
+    borderColor: '#F2B8B8',
+    color: '#B42318',
+  },
+  REVIEW: {
+    title: 'Flag for review',
+    description:
+      'Pause the payment and request additional confirmation from the customer or an analyst.',
+    backgroundColor: '#FFF8E8',
+    borderColor: '#F3D28B',
+    color: '#9A5B00',
+  },
+  ALLOW: {
+    title: 'Allow transaction',
+    description:
+      'The payment can continue through the standard authorization process.',
+    backgroundColor: '#ECFDF3',
+    borderColor: '#A6E5BE',
+    color: '#16794B',
+  },
+}
+
+function getScoreColor(level: RiskLevel) {
+  if (level === 'HIGH') {
+    return '#D14343'
+  }
+
+  if (level === 'MEDIUM') {
+    return '#C76A12'
+  }
+
+  return '#14804A'
+}
+
+interface RiskScoreRingProps {
+  score: number
+  level: RiskLevel
+}
+
+function RiskScoreRing({ score, level }: RiskScoreRingProps) {
+  const scoreColor = getScoreColor(level)
+
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        width: 138,
+        height: 138,
+        display: 'grid',
+        placeItems: 'center',
+        mx: 'auto',
+      }}
+    >
+      <CircularProgress
+        variant="determinate"
+        value={100}
+        size={138}
+        thickness={4}
+        sx={{
+          position: 'absolute',
+          color: '#EEF1F5',
+        }}
+      />
+
+      <CircularProgress
+        variant="determinate"
+        value={score}
+        size={138}
+        thickness={4}
+        sx={{
+          position: 'absolute',
+          color: scoreColor,
+          transform: 'rotate(-90deg)',
+          '& .MuiCircularProgress-circle': {
+            strokeLinecap: 'round',
+          },
+        }}
+      />
+
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography
+          sx={{
+            color: scoreColor,
+            fontSize: 32,
+            lineHeight: 1,
+            fontWeight: 750,
+          }}
+        >
+          {score}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          / 100
+        </Typography>
+      </Box>
+    </Box>
+  )
 }
 
 export function AnalyzePaymentPage() {
-  const [signals, setSignals] = useState<RiskAnalysisRequest>(initialSignals)
-  const [loading, setLoading] = useState(false)
+  const [form, setForm] = useState<PaymentFormState>(initialForm)
   const [result, setResult] = useState<RiskAnalysisResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [decisionFeedback, setDecisionFeedback] = useState<string | null>(null)
+  const [formErrors, setFormErrors] = useState<PaymentFormErrors>({})
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const setBinarySignal = (
-    key: Exclude<keyof RiskAnalysisRequest, 'recent_transaction_count'>,
-    checked: boolean,
+  const updateForm = <Key extends keyof PaymentFormState>(
+    field: Key,
+    value: PaymentFormState[Key],
   ) => {
-    setSignals((current) => ({ ...current, [key]: checked ? 1 : 0 }))
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }))
+
+    setResult(null)
+    setDecisionFeedback(null)
+
+    setSubmitError(null)
+
+    setFormErrors((current) => {
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
+
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setLoading(true)
-    setResult(null)
+ const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  event.preventDefault()
 
-    const analysis = await analyzePaymentMock(signals)
+  const errors = validatePaymentForm(form)
+  setFormErrors(errors)
+
+  if (Object.keys(errors).length > 0) {
+    return
+  }
+
+  setLoading(true)
+  setResult(null)
+  setDecisionFeedback(null)
+  setSubmitError(null)
+
+  try {
+    const analysis = await analyzePayment({
+      amount: Number(form.amount),
+      currency: form.currency,
+      date: form.date,
+      beneficiary: form.beneficiary,
+      country: form.country,
+      paymentChannel: form.paymentChannel,
+      description: form.description,
+    })
+
     setResult(analysis)
+
+  } catch (error) {
+    setSubmitError(
+      error instanceof Error
+        ? error.message
+        : 'The risk analysis could not be completed. Please try again.',
+    )
+  } finally {
     setLoading(false)
   }
+}
+
+  const handleDecision = (decision: string) => {
+    setDecisionFeedback(`Demo decision recorded: ${decision}.`)
+  }
+
+  const handleReset = () => {
+    setForm({ ...initialForm })
+    setResult(null)
+    setFormErrors({})
+    setSubmitError(null)
+    setDecisionFeedback(null)
+  }
+
+  const factors = result
+    ? [...result.triggeredRules, ...result.descriptionSignals]
+    : []
 
   return (
     <Stack spacing={3}>
       <PageHeader
-        title="Analyze a payment"
-        description="Check risk signals before the customer authorizes the transfer."
+        title="Transaction Risk Check"
+        description="Review payment details and receive an explainable risk assessment before releasing funds."
+        action={
+          <Button
+            component={RouterLink}
+            to="/transactions"
+            startIcon={<ArrowBackRoundedIcon />}
+          >
+            Back to transactions
+          </Button>
+        }
       />
 
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1.35fr) minmax(320px, 0.65fr)' },
-          gap: 2,
+          gridTemplateColumns: {
+            xs: '1fr',
+            lg: 'minmax(0, 1.35fr) minmax(330px, 0.65fr)',
+          },
+          gap: 3,
           alignItems: 'start',
         }}
       >
         <Card component="form" onSubmit={handleSubmit}>
-          <CardContent sx={{ p: { xs: 2.5, md: 3 }, '&:last-child': { pb: { xs: 2.5, md: 3 } } }}>
-            <Typography variant="h3">Payment details</Typography>
+          <CardContent
+            sx={{
+              p: { xs: 2.5, md: 3 },
+              '&:last-child': { pb: { xs: 2.5, md: 3 } },
+            }}
+          >
+            <Typography variant="h3">Transaction details</Typography>
+
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Contextual fields are displayed for the analyst; the risk signals below match the API contract.
+              Enter the payment context. Risk features are evaluated automatically in the background.
             </Typography>
 
             <Box
@@ -82,192 +321,364 @@ export function AnalyzePaymentPage() {
                 mt: 3,
               }}
             >
-              <TextField required label="Amount" type="number" defaultValue="12500" />
-              <TextField select required label="Currency" defaultValue="EUR">
-                <MenuItem value="EUR">EUR</MenuItem>
-                <MenuItem value="RON">RON</MenuItem>
-                <MenuItem value="USD">USD</MenuItem>
-              </TextField>
-              <TextField required label="Beneficiary" defaultValue="Apex Trading Group" />
-              <TextField required label="Destination country" defaultValue="United Kingdom" />
-              <TextField select required label="Payment channel" defaultValue="Mobile banking">
-                <MenuItem value="Mobile banking">Mobile banking</MenuItem>
-                <MenuItem value="Online banking">Online banking</MenuItem>
-                <MenuItem value="API transfer">API transfer</MenuItem>
-              </TextField>
               <TextField
                 required
-                label="Recent transaction count"
+                label="Amount"
                 type="number"
-                value={signals.recent_transaction_count}
-                onChange={(event) =>
-                  setSignals((current) => ({
-                    ...current,
-                    recent_transaction_count: Math.max(0, Number(event.target.value)),
-                  }))
-                }
-              />
-            </Box>
-
-            <Divider sx={{ my: 3 }} />
-            <Typography variant="h3">Detected risk signals</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
-              These controls simulate features produced by the ETL and machine-learning pipeline.
-            </Typography>
-
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-                gap: 1,
+                value={form.amount}
+                onChange={(event) => updateForm('amount', event.target.value)}
+                error={Boolean(formErrors.amount)}
+                helperText={formErrors.amount}
+                slotProps={{
+                htmlInput: { min: 0.01, step: '0.01' },
               }}
-            >
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={signals.is_new_beneficiary === 1}
-                    onChange={(event) => setBinarySignal('is_new_beneficiary', event.target.checked)}
-                  />
-                }
-                label="New beneficiary"
               />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={signals.is_unusually_large === 1}
-                    onChange={(event) => setBinarySignal('is_unusually_large', event.target.checked)}
-                  />
-                }
-                label="Unusually large amount"
+
+              <TextField
+                required
+                select
+                label="Currency"
+                value={form.currency}
+                onChange={(event) => updateForm('currency', event.target.value)}
+              >
+                <MenuItem value="USD">USD</MenuItem>
+                <MenuItem value="EUR">EUR</MenuItem>
+                <MenuItem value="RON">RON</MenuItem>
+              </TextField>
+
+              <TextField
+                required
+                label="Payment date"
+                type="date"
+                value={form.date}
+                onChange={(event) => updateForm('date', event.target.value)}
+                error={Boolean(formErrors.date)}
+                helperText={formErrors.date}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
               />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={signals.is_unusual_country === 1}
-                    onChange={(event) => setBinarySignal('is_unusual_country', event.target.checked)}
-                  />
-                }
-                label="Unusual destination country"
+
+              <TextField
+                required
+                label="Beneficiary"
+                value={form.beneficiary}
+                onChange={(event) => updateForm('beneficiary', event.target.value)}
+                error={Boolean(formErrors.beneficiary)}
+                helperText={formErrors.beneficiary}
               />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={signals.is_risky_payment_channel === 1}
-                    onChange={(event) =>
-                      setBinarySignal('is_risky_payment_channel', event.target.checked)
-                    }
-                  />
+
+              <TextField
+                required
+                label="Destination country"
+                value={form.country}
+                onChange={(event) => updateForm('country', event.target.value)}
+                error={Boolean(formErrors.country)}
+                helperText={formErrors.country}
+              />
+
+              <TextField
+                required
+                select
+                label="Payment method"
+                value={form.paymentChannel}
+                onChange={(event) =>
+                  updateForm('paymentChannel', event.target.value)
                 }
-                label="Risky payment channel"
+              >
+                <MenuItem value="Bank Transfer (SWIFT)">
+                  Bank Transfer (SWIFT)
+                </MenuItem>
+                <MenuItem value="Online banking">Online banking</MenuItem>
+                <MenuItem value="Mobile banking">Mobile banking</MenuItem>
+                <MenuItem value="Wire transfer">Wire transfer</MenuItem>
+                <MenuItem value="Cryptocurrency">Cryptocurrency</MenuItem>
+              </TextField>
+
+              <TextField
+                label="Description / reference"
+                value={form.description}
+                onChange={(event) =>
+                  updateForm('description', event.target.value)
+                }
+                multiline
+                minRows={4}
+                fullWidth
+                placeholder="What is this payment for?"
+                sx={{
+                  gridColumn: { xs: 'auto', md: '1 / -1' },
+                }}
               />
             </Box>
 
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SecurityRoundedIcon />}
-              sx={{ mt: 3 }}
-            >
-              {loading ? 'Analyzing payment...' : 'Run risk analysis'}
-            </Button>
+            <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1.5}
+                sx={{ mt: 3 }}
+              >
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  disabled={loading}
+                  startIcon={
+                    loading ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : (
+                      <SecurityRoundedIcon />
+                    )
+                  }
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                >
+                  {loading ? 'Analyzing transaction...' : 'Analyze transaction'}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outlined"
+                  disabled={loading}
+                  onClick={handleReset}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                >
+                  Reset form
+                </Button>
+              </Stack>
           </CardContent>
         </Card>
 
-        <Card sx={{ position: { xl: 'sticky' }, top: { xl: 92 } }}>
-          <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-            <Typography variant="h3">Analysis result</Typography>
-            {!result && !loading && (
-              <Box sx={{ py: 7, textAlign: 'center' }}>
-                <Box
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    display: 'grid',
-                    placeItems: 'center',
-                    mx: 'auto',
-                    mb: 2,
-                    borderRadius: 3,
-                    color: 'primary.main',
-                    backgroundColor: '#E8F8F5',
-                  }}
-                >
-                  <SecurityRoundedIcon fontSize="large" />
+        <Stack spacing={2}>
+          <Card>
+            <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                <Typography variant="h3">Risk assessment</Typography>
+
+                {submitError && (
+                  <Alert severity="error" onClose={() => setSubmitError(null)}>
+                    {submitError}
+                  </Alert>
+)}
+
+                {result && <RiskLevelChip level={result.riskLevel} />}
+              </Box>
+
+              {!result && !loading && (
+                <Box sx={{ py: 6, textAlign: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      display: 'grid',
+                      placeItems: 'center',
+                      mx: 'auto',
+                      mb: 2,
+                      borderRadius: '50%',
+                      color: 'primary.main',
+                      backgroundColor: '#E8F8F5',
+                    }}
+                  >
+                    <SecurityRoundedIcon fontSize="large" />
+                  </Box>
+
+                  <Typography sx={{ fontWeight: 650 }}>
+                    Awaiting analysis
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.75 }}
+                  >
+                    Submit the payment to receive a score and a recommended action.
+                  </Typography>
                 </Box>
-                <Typography sx={{ fontWeight: 650 }}>Ready to analyze</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-                  Submit the payment to receive a score and an explainable risk decision.
-                </Typography>
-              </Box>
-            )}
+              )}
 
-            {loading && (
-              <Box sx={{ py: 8, textAlign: 'center' }}>
-                <CircularProgress />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                  Evaluating transaction signals...
-                </Typography>
-              </Box>
-            )}
+              {loading && (
+                <Box sx={{ py: 6, textAlign: 'center' }}>
+                  <CircularProgress />
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                  >
+                    Evaluating payment context...
+                  </Typography>
+                </Box>
+              )}
 
-            {result && (
-              <Stack spacing={2.5} sx={{ mt: 2.5 }}>
-                <Box
-                  sx={{
-                    p: 2.5,
-                    textAlign: 'center',
-                    borderRadius: 3,
-                    backgroundColor: '#F7F9FC',
-                  }}
-                >
-                  <Typography variant="caption" color="text.secondary">
+              {result && (
+                <Box sx={{ pt: 3 }}>
+                  <RiskScoreRing
+                    score={result.riskScore}
+                    level={result.riskLevel}
+                  />
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 2, textAlign: 'center' }}
+                  >
                     Risk score
                   </Typography>
-                  <Typography sx={{ my: 0.5, fontSize: 42, lineHeight: 1.1, fontWeight: 750 }}>
-                    {result.riskScore}
-                    <Typography component="span" color="text.secondary" sx={{ fontWeight: 500 }}>
-                      /100
-                    </Typography>
-                  </Typography>
-                  <RiskLevelChip level={result.riskLevel} />
                 </Box>
+              )}
+            </CardContent>
+          </Card>
 
-                <Alert
-                  severity={result.riskLevel === 'HIGH' ? 'error' : result.riskLevel === 'MEDIUM' ? 'warning' : 'success'}
-                >
-                  {result.riskLevel === 'HIGH'
-                    ? 'Pause this payment and request manual verification.'
-                    : result.riskLevel === 'MEDIUM'
-                      ? 'Additional customer confirmation is recommended.'
-                      : 'No significant risk signals were detected.'}
-                </Alert>
-
-                <Box>
-                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
-                    Triggered rules
+          {result && (
+            <>
+              <Card>
+                <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+                  <Typography
+                    variant="overline"
+                    sx={{ fontWeight: 750, letterSpacing: '0.08em' }}
+                  >
+                    Risk factors detected
                   </Typography>
-                  {result.triggeredRules.length === 0 ? (
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.5, mb: 2 }}
+                  >
+                    Signals returned by the risk engine.
+                  </Typography>
+
+                  {factors.length === 0 ? (
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                       <CheckCircleRoundedIcon color="success" fontSize="small" />
                       <Typography variant="body2" color="text.secondary">
-                        No risk rules triggered
+                        No risk factors detected.
                       </Typography>
                     </Stack>
                   ) : (
-                    <Stack spacing={1}>
-                      {result.triggeredRules.map((rule) => (
-                        <Typography key={rule} variant="body2" color="text.secondary">
-                          • {rule}
-                        </Typography>
+                    <Stack spacing={1.25}>
+                      {factors.map((factor) => (
+                        <Stack
+                          key={factor}
+                          direction="row"
+                          spacing={1}
+                          sx={{ alignItems: 'flex-start' }}
+                        >
+                          <CloseRoundedIcon
+                            sx={{
+                              mt: 0.15,
+                              fontSize: 17,
+                              color: result.riskLevel === 'LOW'
+                                ? 'success.main'
+                                : 'error.main',
+                            }}
+                          />
+                          <Typography variant="body2">
+                            {factor}
+                          </Typography>
+                        </Stack>
                       ))}
                     </Stack>
                   )}
-                </Box>
-              </Stack>
-            )}
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+
+              <Box
+                sx={{
+                  p: 2.5,
+                  border: '1px solid',
+                  borderColor: actionConfig[result.recommendedAction].borderColor,
+                  borderRadius: 3,
+                  backgroundColor:
+                    actionConfig[result.recommendedAction].backgroundColor,
+                }}
+              >
+                <Typography
+                  variant="overline"
+                  sx={{
+                    color: actionConfig[result.recommendedAction].color,
+                    fontWeight: 750,
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  Recommended action
+                </Typography>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 0.75,
+                    color: actionConfig[result.recommendedAction].color,
+                    lineHeight: 1.65,
+                  }}
+                >
+                  {actionConfig[result.recommendedAction].description}
+                </Typography>
+
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1}
+                  sx={{ mt: 2 }}
+                >
+                  {result.recommendedAction === 'BLOCK' && (
+                    <Button
+                      variant="contained"
+                      color="error"
+                      onClick={() => handleDecision('Block transaction')}
+                      sx={{ flex: 1 }}
+                    >
+                      Block transaction
+                    </Button>
+                  )}
+
+                  {result.recommendedAction === 'ALLOW' && (
+                    <Button
+                      variant="contained"
+                      color="success"
+                      onClick={() => handleDecision('Allow transaction')}
+                      sx={{ flex: 1 }}
+                    >
+                      Allow transaction
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleDecision('Flag for review')}
+                    sx={{
+                      flex: 1,
+                      color: actionConfig[result.recommendedAction].color,
+                      borderColor:
+                        actionConfig[result.recommendedAction].borderColor,
+                    }}
+                  >
+                    Flag for review
+                  </Button>
+                </Stack>
+              </Box>
+
+              <Alert severity={result.riskLevel === 'HIGH' ? 'error' : result.riskLevel === 'MEDIUM' ? 'warning' : 'success'}>
+                {result.explanation}
+              </Alert>
+
+              {decisionFeedback && (
+                <Alert severity="info">{decisionFeedback}</Alert>
+              )}
+
+              <Divider />
+
+              <Typography variant="caption" color="text.secondary">
+                The visible result is generated from the payment context. Internal
+                risk features remain hidden from the operator.
+              </Typography>
+            </>
+          )}
+        </Stack>
       </Box>
     </Stack>
   )
