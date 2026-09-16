@@ -23,6 +23,9 @@ import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
 import { analyzePayment } from '../services/riskService'
 
+import { useTransactions } from '../context/TransactionContext'
+import { createTransactionFromAnalysis } from '../services/transactionMapper'
+
 import type {
   RecommendedAction,
   RiskAnalysisResult,
@@ -195,6 +198,7 @@ export function AnalyzePaymentPage() {
   const [decisionFeedback, setDecisionFeedback] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState<PaymentFormErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const { saveTransaction } = useTransactions()
 
   const updateForm = <Key extends keyof PaymentFormState>(
     field: Key,
@@ -234,7 +238,7 @@ export function AnalyzePaymentPage() {
   setSubmitError(null)
 
   try {
-    const analysis = await analyzePayment({
+    const payment = {
       amount: Number(form.amount),
       currency: form.currency,
       date: form.date,
@@ -242,7 +246,16 @@ export function AnalyzePaymentPage() {
       country: form.country,
       paymentChannel: form.paymentChannel,
       description: form.description,
-    })
+    }
+
+    const analysis = await analyzePayment(payment)
+
+    const transaction = createTransactionFromAnalysis(
+      payment,
+      analysis,
+    )
+
+    await saveTransaction(transaction)
 
     setResult(analysis)
 

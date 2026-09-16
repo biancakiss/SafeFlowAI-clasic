@@ -15,6 +15,11 @@ export interface Transaction {
   riskLevel: RiskLevel
   status: TransactionStatus
   createdAt: string
+  description?: string
+  triggeredRules?: string[]
+  descriptionSignals?: string[]
+  recommendedAction?: RecommendedAction
+  explanation?: string
 }
 
 export interface PaymentAnalysisInput {

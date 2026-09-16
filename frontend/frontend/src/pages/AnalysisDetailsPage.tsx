@@ -1,94 +1,495 @@
-import { Alert, Box, Button, Card, CardContent, Divider, Stack, Typography } from '@mui/material'
-import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import { useState, type ReactNode } from 'react'
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Divider,
+  Stack,
+  Typography,
+} from '@mui/material'
+import {
+  ArrowBackRounded,
+  BlockOutlined,
+  CheckCircleOutlined,
+  FlagOutlined,
+} from '@mui/icons-material'
 import { Link as RouterLink, useParams } from 'react-router'
+
+import { useTransactions } from '../context/TransactionContext'
+import type { TransactionStatus } from '../types'
 import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
-import { recentTransactions } from '../mocks/dashboardData'
+
+function formatDate(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return date.toLocaleString('en-GB', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+}
 
 export function AnalysisDetailsPage() {
-  const { analysisId } = useParams()
-  const transaction = recentTransactions.find((item) => item.id === analysisId)
+  const { analysisId } = useParams<{ analysisId: string }>()
 
-  if (!transaction) {
+  const {
+    transactions,
+    loading,
+    error,
+    updateTransactionStatus,
+  } = useTransactions()
+
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null)
+
+  const transaction = transactions.find(
+    (item) => item.id === analysisId,
+  )
+
+  const handleStatusChange = async (
+    status: TransactionStatus,
+    label: string,
+  ) => {
+    if (!transaction) {
+      return
+    }
+
+    setActionFeedback(null)
+
+    try {
+      const updatedTransaction = await updateTransactionStatus(
+        transaction.id,
+        status,
+      )
+
+      if (updatedTransaction) {
+        setActionFeedback(`${label} status saved successfully.`)
+      }
+    } catch {
+      setActionFeedback('The status could not be updated.')
+    }
+  }
+
+  if (loading) {
     return (
-      <Alert severity="warning">
-        Analysis not found. Return to the transaction list and select an available item.
-      </Alert>
+      <Box
+        sx={{
+          minHeight: 360,
+          display: 'grid',
+          placeItems: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
     )
   }
 
-  const risky = transaction.riskLevel !== 'LOW'
+  if (error) {
+    return (
+      <Stack spacing={2}>
+        <PageHeader
+          title="Analysis details"
+          description="Review the risk decision and payment context."
+        />
+
+        <Alert severity="error">{error}</Alert>
+
+        <Button
+          component={RouterLink}
+          to="/transactions"
+          startIcon={<ArrowBackRounded />}
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          Back to transactions
+        </Button>
+      </Stack>
+    )
+  }
+
+  if (!transaction) {
+    return (
+      <Stack spacing={2}>
+        <PageHeader
+          title="Analysis not found"
+          description="The requested payment analysis is not available."
+        />
+
+        <Alert severity="warning">
+          This analysis may have been removed or the link is invalid.
+        </Alert>
+
+        <Button
+          component={RouterLink}
+          to="/transactions"
+          startIcon={<ArrowBackRounded />}
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          Back to transactions
+        </Button>
+      </Stack>
+    )
+  }
+
+  const detectedFactors = [
+    ...(transaction.triggeredRules ?? []),
+    ...(transaction.descriptionSignals ?? []),
+  ]
+
+  const riskIsHigh = transaction.riskLevel === 'HIGH'
 
   return (
     <Stack spacing={3}>
       <PageHeader
         title={`Analysis ${transaction.id}`}
-        description="Explainable payment risk decision and recommended analyst action."
+        description="Review the payment context, detected signals and recommended action."
         action={
-          <Button component={RouterLink} to="/transactions" startIcon={<ArrowBackRoundedIcon />}>
+          <Button
+            component={RouterLink}
+            to="/transactions"
+            startIcon={<ArrowBackRounded />}
+          >
             Back to transactions
           </Button>
         }
       />
+
+      {actionFeedback && (
+        <Alert
+          severity={
+            actionFeedback.includes('could not')
+              ? 'error'
+              : 'success'
+          }
+        >
+          {actionFeedback}
+        </Alert>
+      )}
+
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.2fr) minmax(320px, 0.8fr)' },
-          gap: 2,
+          gridTemplateColumns: {
+            xs: '1fr',
+            lg: '1.15fr 0.85fr',
+          },
+          gap: 3,
         }}
       >
         <Card>
-          <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-            <Typography variant="h3">Payment information</Typography>
-            <Stack divider={<Divider flexItem />} spacing={2} sx={{ mt: 2.5 }}>
-              {[
-                ['Beneficiary', transaction.beneficiary],
-                ['Destination country', transaction.country],
-                ['Amount', `${transaction.currency} ${transaction.amount.toLocaleString('en-GB')}`],
-                ['Payment channel', transaction.channel],
-                ['Created', transaction.createdAt],
-              ].map(([label, value]) => (
-                <Box key={label} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {label}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 650, textAlign: 'right' }}>
-                    {value}
-                  </Typography>
-                </Box>
-              ))}
+          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+            <Stack spacing={2.5}>
+              <Stack
+                direction="row"
+                sx={{
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                <Typography variant="h3">
+                  Payment information
+                </Typography>
+
+                <Chip
+                  label={transaction.status}
+                  color={
+                    transaction.status === 'Blocked'
+                      ? 'error'
+                      : transaction.status === 'Approved'
+                        ? 'success'
+                        : 'warning'
+                  }
+                  variant="outlined"
+                />
+              </Stack>
+
+              <Divider />
+
+              <Stack
+                divider={<Divider flexItem />}
+                spacing={2}
+              >
+                <InfoItem label="Beneficiary">
+                  {transaction.beneficiary}
+                </InfoItem>
+
+                <InfoItem label="Destination country">
+                  {transaction.country}
+                </InfoItem>
+
+                <InfoItem label="Amount">
+                  {transaction.currency}{' '}
+                  {transaction.amount.toLocaleString('en-GB')}
+                </InfoItem>
+
+                <InfoItem label="Payment channel">
+                  {transaction.channel}
+                </InfoItem>
+
+                <InfoItem label="Created">
+                  {formatDate(transaction.createdAt)}
+                </InfoItem>
+
+                <InfoItem label="Transaction ID">
+                  {transaction.id}
+                </InfoItem>
+              </Stack>
+
+              {transaction.description && (
+                <>
+                  <Divider />
+
+                  <InfoItem label="Payment description">
+                    {transaction.description}
+                  </InfoItem>
+                </>
+              )}
             </Stack>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-            <Typography variant="h3">Risk decision</Typography>
-            <Box sx={{ py: 3, textAlign: 'center' }}>
-              <Typography sx={{ fontSize: 48, lineHeight: 1, fontWeight: 750 }}>
-                {transaction.riskScore}
-                <Typography component="span" color="text.secondary">
-                  /100
+          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+            <Stack spacing={2.5}>
+              <Typography variant="h3">
+                Risk decision
+              </Typography>
+
+              <Divider />
+
+              <Box sx={{ py: 2, textAlign: 'center' }}>
+                <Typography
+                  sx={{
+                    fontSize: 48,
+                    lineHeight: 1,
+                    fontWeight: 800,
+                  }}
+                >
+                  {transaction.riskScore}
+                  <Typography
+                    component="span"
+                    color="text.secondary"
+                    sx={{ fontSize: 20 }}
+                  >
+                    /100
+                  </Typography>
                 </Typography>
-              </Typography>
-              <Box sx={{ mt: 1.5 }}>
-                <RiskLevelChip level={transaction.riskLevel} />
+
+                <Box sx={{ mt: 2 }}>
+                  <RiskLevelChip level={transaction.riskLevel} />
+                </Box>
               </Box>
-            </Box>
-            <Alert severity={risky ? 'warning' : 'success'}>
-              {risky
-                ? 'Verify the beneficiary and request additional confirmation before release.'
-                : 'The payment can continue under the standard authorization process.'}
-            </Alert>
-            <Stack direction="row" spacing={1} sx={{ mt: 2.5, alignItems: 'center' }}>
-              <CheckCircleRoundedIcon color="success" fontSize="small" />
-              <Typography variant="body2" color="text.secondary">
-                Decision generated by rules model mock-rules-v1
-              </Typography>
+
+              <Stack
+                direction="row"
+                sx={{
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography color="text.secondary">
+                  Recommended action
+                </Typography>
+
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    color: 'primary.main',
+                  }}
+                >
+                  {transaction.recommendedAction ?? 'REVIEW'}
+                </Typography>
+              </Stack>
+
+              <Alert
+                severity={
+                  transaction.riskLevel === 'HIGH'
+                    ? 'error'
+                    : transaction.riskLevel === 'MEDIUM'
+                      ? 'warning'
+                      : 'success'
+                }
+              >
+                {transaction.explanation ??
+                  (riskIsHigh
+                    ? 'Verify the beneficiary and request additional confirmation before release.'
+                    : 'The payment can continue under the standard authorization process.')}
+              </Alert>
+
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: 'center' }}
+              >
+                <CheckCircleOutlined
+                  color="success"
+                  fontSize="small"
+                />
+
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Explainable decision generated by the SafeFlow
+                  risk engine.
+                </Typography>
+              </Stack>
             </Stack>
           </CardContent>
         </Card>
       </Box>
+
+      <Card>
+        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Stack spacing={2}>
+            <Typography variant="h3">
+              Detected risk factors
+            </Typography>
+
+            <Divider />
+
+            {detectedFactors.length === 0 ? (
+              <Alert severity="success">
+                No significant risk factors were detected.
+              </Alert>
+            ) : (
+              <Stack spacing={1.25}>
+                {detectedFactors.map((factor, index) => (
+                  <Stack
+                    key={`${factor}-${index}`}
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: 'flex-start' }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{
+                        mt: 0.8,
+                        width: 7,
+                        height: 7,
+                        borderRadius: '50%',
+                        bgcolor: 'error.main',
+                        flexShrink: 0,
+                      }}
+                    />
+
+                    <Typography>{factor}</Typography>
+                  </Stack>
+                ))}
+              </Stack>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Stack spacing={2}>
+            <Typography variant="h3">
+              Analyst actions
+            </Typography>
+
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              Update the operational status after reviewing the payment.
+            </Typography>
+
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1.5}
+            >
+              <Button
+                fullWidth
+                variant={
+                  transaction.status === 'Approved'
+                    ? 'contained'
+                    : 'outlined'
+                }
+                color="success"
+                startIcon={<CheckCircleOutlined />}
+                onClick={() =>
+                  handleStatusChange('Approved', 'Approved')
+                }
+              >
+                Approve payment
+              </Button>
+
+              <Button
+                fullWidth
+                variant={
+                  transaction.status === 'In review'
+                    ? 'contained'
+                    : 'outlined'
+                }
+                color="warning"
+                startIcon={<FlagOutlined />}
+                onClick={() =>
+                  handleStatusChange('In review', 'In review')
+                }
+              >
+                Flag for review
+              </Button>
+
+              <Button
+                fullWidth
+                variant={
+                  transaction.status === 'Blocked'
+                    ? 'contained'
+                    : 'outlined'
+                }
+                color="error"
+                startIcon={<BlockOutlined />}
+                onClick={() =>
+                  handleStatusChange('Blocked', 'Blocked')
+                }
+              >
+                Block payment
+              </Button>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Stack>
+  )
+}
+
+type InfoItemProps = {
+  label: string
+  children: ReactNode
+}
+
+function InfoItem({ label, children }: InfoItemProps) {
+  return (
+    <Stack
+      direction="row"
+      sx={{
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 2,
+      }}
+    >
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+
+      <Typography
+        variant="body2"
+        sx={{
+          fontWeight: 650,
+          textAlign: 'right',
+        }}
+      >
+        {children}
+      </Typography>
     </Stack>
   )
 }

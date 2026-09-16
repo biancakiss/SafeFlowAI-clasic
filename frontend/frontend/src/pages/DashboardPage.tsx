@@ -29,10 +29,11 @@ import { RiskLevelChip } from '../components/common/RiskLevelChip'
 import { ScamGlobeSection } from '../components/dashboard/ScamGlobeSection'
 import {
   globeLocations,
-  recentTransactions,
   riskTrend,
   scamRoutes,
 } from '../mocks/dashboardData'
+
+import { useTransactions } from '../context/TransactionContext';
 
 const currency = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0,
@@ -44,7 +45,9 @@ const distribution = [
   { label: 'High risk', value: 8, color: '#D95555' },
 ]
 
+
 export function DashboardPage() {
+  const { transactions } = useTransactions()
   return (
     <Stack spacing={3}>
       <PageHeader
@@ -324,7 +327,7 @@ export function DashboardPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {recentTransactions.slice(0, 4).map((transaction) => (
+                {transactions.slice(0, 4).map((transaction) => (
                   <TableRow key={transaction.id} hover>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 650 }}>

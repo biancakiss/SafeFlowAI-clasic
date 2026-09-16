@@ -1,22 +1,31 @@
 import { lazy, Suspense } from 'react'
 import { Box, CircularProgress } from '@mui/material'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+} from 'react-router'
 import { AppShell } from '../components/layout/AppShell'
+import { TransactionProvider } from '../context/TransactionContext'
 
 const DashboardPage = lazy(async () => ({
   default: (await import('../pages/DashboardPage')).DashboardPage,
 }))
 
 const AnalyzePaymentPage = lazy(async () => ({
-  default: (await import('../pages/AnalyzePaymentPage')).AnalyzePaymentPage,
+  default: (await import('../pages/AnalyzePaymentPage'))
+    .AnalyzePaymentPage,
 }))
 
 const TransactionsPage = lazy(async () => ({
-  default: (await import('../pages/TransactionsPage')).TransactionsPage,
+  default: (await import('../pages/TransactionsPage'))
+    .TransactionsPage,
 }))
 
 const AnalysisDetailsPage = lazy(async () => ({
-  default: (await import('../pages/AnalysisDetailsPage')).AnalysisDetailsPage,
+  default: (await import('../pages/AnalysisDetailsPage'))
+    .AnalysisDetailsPage,
 }))
 
 const ProfilePage = lazy(async () => ({
@@ -38,23 +47,52 @@ function PageLoader() {
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/login" element={<AuthPage mode="login" />} />
-          <Route path="/register" element={<AuthPage mode="register" />} />
+      <TransactionProvider>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route
+              path="/login"
+              element={<AuthPage mode="login" />}
+            />
+            <Route
+              path="/register"
+              element={<AuthPage mode="register" />}
+            />
 
-          <Route element={<AppShell />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/analyze" element={<AnalyzePaymentPage />} />
-            <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/analyses/:analysisId" element={<AnalysisDetailsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-          </Route>
+            <Route element={<AppShell />}>
+              <Route
+                index
+                element={<Navigate to="/dashboard" replace />}
+              />
+              <Route
+                path="/dashboard"
+                element={<DashboardPage />}
+              />
+              <Route
+                path="/analyze"
+                element={<AnalyzePaymentPage />}
+              />
+              <Route
+                path="/transactions"
+                element={<TransactionsPage />}
+              />
+              <Route
+                path="/analyses/:analysisId"
+                element={<AnalysisDetailsPage />}
+              />
+              <Route
+                path="/profile"
+                element={<ProfilePage />}
+              />
+            </Route>
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Suspense>
+            <Route
+              path="*"
+              element={<Navigate to="/dashboard" replace />}
+            />
+          </Routes>
+        </Suspense>
+      </TransactionProvider>
     </BrowserRouter>
   )
 }
