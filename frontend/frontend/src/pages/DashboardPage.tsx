@@ -22,7 +22,10 @@ import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded'
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import { LineChart } from '@mui/x-charts/LineChart'
-import { Link as RouterLink } from 'react-router'
+import {
+  Link as RouterLink,
+  useNavigate,
+} from 'react-router'
 import { MetricCard } from '../components/common/MetricCard'
 import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
@@ -39,15 +42,95 @@ const currency = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0,
 })
 
-const distribution = [
-  { label: 'Low risk', value: 74, color: '#20A464' },
-  { label: 'Medium risk', value: 18, color: '#E18A2D' },
-  { label: 'High risk', value: 8, color: '#D95555' },
-]
-
-
 export function DashboardPage() {
+  const navigate = useNavigate()
   const { transactions } = useTransactions()
+
+  const totalTransactions = transactions.length
+
+  const lowRiskCount = transactions.filter(
+    (transaction) => transaction.riskLevel === 'LOW',
+  ).length
+
+  const mediumRiskCount = transactions.filter(
+    (transaction) => transaction.riskLevel === 'MEDIUM',
+  ).length
+
+  const highRiskCount = transactions.filter(
+    (transaction) => transaction.riskLevel === 'HIGH',
+  ).length
+
+  const safePaymentRate =
+    totalTransactions > 0
+      ? ((lowRiskCount / totalTransactions) * 100).toFixed(1)
+      : '0.0'
+
+  const metricCurrencyCode =
+    transactions.find((transaction) => transaction.currency)?.currency ?? 'EUR'
+
+  const blockedAmount = transactions
+    .filter(
+      (transaction) =>
+        transaction.status === 'Blocked' &&
+        transaction.currency === metricCurrencyCode,
+    )
+    .reduce((total, transaction) => total + transaction.amount, 0)
+
+  const metricAmountFormatter = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: metricCurrencyCode,
+    maximumFractionDigits: 0,
+  })
+
+  const lowRiskPercentage =
+    totalTransactions > 0
+      ? Math.round((lowRiskCount / totalTransactions) * 100)
+      : 0
+
+  const mediumRiskPercentage =
+    totalTransactions > 0
+      ? Math.round((mediumRiskCount / totalTransactions) * 100)
+      : 0
+
+  const highRiskPercentage =
+    totalTransactions > 0
+      ? 100 - lowRiskPercentage - mediumRiskPercentage
+      : 0
+
+  const distribution = [
+    {
+      label: 'Low risk',
+      value: lowRiskPercentage,
+      color: '#20A464',
+    },
+    {
+      label: 'Medium risk',
+      value: mediumRiskPercentage,
+      color: '#E18A2D',
+    },
+    {
+      label: 'High risk',
+      value: highRiskPercentage,
+      color: '#D95555',
+    },
+  ]
+
+  const distributionBackground =
+    totalTransactions > 0
+      ? `conic-gradient(
+          #20A464 0 ${lowRiskPercentage}%,
+          #E18A2D ${lowRiskPercentage}% ${
+            lowRiskPercentage + mediumRiskPercentage
+          }%,
+          #D95555 ${
+            lowRiskPercentage + mediumRiskPercentage
+          }% 100%
+        )`
+      : '#EEF1F5'
+
+  const openAnalysis = (transactionId: string) => {
+    navigate(`/analyses/${transactionId}`)
+  }
   return (
     <Stack spacing={3}>
       <PageHeader
@@ -148,36 +231,36 @@ export function DashboardPage() {
       >
         <MetricCard
           title="Payments analyzed"
-          value="1,208"
-          change="12.4%"
-          helper="vs. last week"
+          value={totalTransactions.toLocaleString('en-GB')}
+          change="Live"
+          helper="from transactions"
           icon={<PaymentsRoundedIcon />}
           color="#3156D3"
           backgroundColor="#EDF1FF"
         />
         <MetricCard
           title="High-risk payments"
-          value="96"
-          change="8.1%"
-          helper="more detected"
+          value={highRiskCount.toLocaleString('en-GB')}
+          change="Live"
+          helper="high-risk records"
           icon={<ReportProblemRoundedIcon />}
           color="#C34242"
           backgroundColor="#FDEDED"
         />
         <MetricCard
           title="Potential loss prevented"
-          value="€184K"
-          change="18.7%"
-          helper="vs. last week"
+          value={metricAmountFormatter.format(blockedAmount)}
+          change="Live"
+          helper="blocked payment value"
           icon={<SavingsRoundedIcon />}
           color="#14804A"
           backgroundColor="#EAF8F0"
         />
         <MetricCard
           title="Safe payment rate"
-          value="92.1%"
-          change="2.3%"
-          helper="improvement"
+          value={`${safePaymentRate}%`}
+          change="Live"
+          helper="low-risk payment rate"
           icon={<GppGoodRoundedIcon />}
           color="#0E9384"
           backgroundColor="#E8F8F5"
@@ -240,8 +323,7 @@ export function DashboardPage() {
                   display: 'grid',
                   placeItems: 'center',
                   borderRadius: '50%',
-                  background:
-                    'conic-gradient(#20A464 0 74%, #E18A2D 74% 92%, #D95555 92% 100%)',
+                  background: distributionBackground,
                 }}
               >
                 <Box
@@ -256,7 +338,9 @@ export function DashboardPage() {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ fontSize: 24, fontWeight: 750 }}>1,208</Typography>
+                    <Typography sx={{ fontSize: 24, fontWeight: 750 }}>
+                    {totalTransactions.toLocaleString('en-GB')}
+                  </Typography>
                     <Typography variant="caption" color="text.secondary">
                       total
                     </Typography>
@@ -328,7 +412,26 @@ export function DashboardPage() {
               </TableHead>
               <TableBody>
                 {transactions.slice(0, 4).map((transaction) => (
-                  <TableRow key={transaction.id} hover>
+                  <TableRow
+                      key={transaction.id}
+                      hover
+                      tabIndex={0}
+                      onClick={() => openAnalysis(transaction.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          openAnalysis(transaction.id)
+                        }
+                      }}
+                      sx={{
+                        cursor: 'pointer',
+                        '&:focus-visible': {
+                          outline: '2px solid',
+                          outlineColor: 'primary.main',
+                          outlineOffset: -2,
+                        },
+                      }}
+                    >
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 650 }}>
                         {transaction.id}
