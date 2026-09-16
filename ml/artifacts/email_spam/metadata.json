@@ -1,0 +1,48 @@
+{
+  "artifact_format_version": 1,
+  "artifact_sha256": "284d7de725b7a737b59d02a63a0880ea1e3358981dde647eef4c3c47b285ed3d",
+  "model_version": "email-spam-284d7de725b7",
+  "preprocessing_version": "email-text-v1",
+  "dataset_sha256": "9df96a31df8e13669720ef20754fe511388193c193332d9e5f88b0dd46037101",
+  "seed": 42,
+  "versions": {
+    "pandas": "3.0.5",
+    "numpy": "2.5.3",
+    "scikit-learn": "1.9.1",
+    "matplotlib": "3.11.1",
+    "joblib": "1.6.0",
+    "scipy": "1.18.1"
+  },
+  "python": "3.13.15",
+  "train_rows": 3483,
+  "test_rows": 871,
+  "selected_parameters": {
+    "classifier": "LinearSVC(max_iter=5000, random_state=42)",
+    "features": "TfidfVectorizer(analyzer='char_wb', max_features=40000, min_df=2,\n                ngram_range=(3, 5), sublinear_tf=True)"
+  },
+  "cv_spam_f1": 0.9806154977098374,
+  "benchmark_metrics": {
+    "accuracy": 0.983926521239954,
+    "spam_precision": 0.9757575757575757,
+    "spam_recall": 0.9817073170731707,
+    "spam_f1": 0.9787234042553191,
+    "false_positive_rate": 0.014732965009208104
+  },
+  "evaluation_status": "Previously inspected corpus benchmark; no independent inbox evaluation",
+  "score_type": "decision_margin",
+  "confusion_matrix": [
+    [
+      535,
+      8
+    ],
+    [
+      6,
+      322
+    ]
+  ],
+  "preprocessing": "NFKC, collapse whitespace; concatenate subject and body",
+  "class_mapping": {
+    "0": "legitimate",
+    "1": "spam"
+  }
+}
