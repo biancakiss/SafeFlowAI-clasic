@@ -1,4 +1,111 @@
-import type { RiskTrendPoint, Transaction } from '../types'
+import type {
+  GlobeLocation,
+  RiskTrendPoint,
+  ScamRoute,
+  Transaction,
+} from '../types'
+
+// Static, synthetic data used only for the dashboard demonstration.
+// It must not be presented as live intelligence or real transaction traffic.
+export const scamRoutes: ScamRoute[] = [
+  {
+    id: 'route-sg-au',
+    source: { city: 'Singapore', country: 'Singapore', lat: 1.3521, lng: 103.8198 },
+    target: { city: 'Sydney', country: 'Australia', lat: -33.8688, lng: 151.2093 },
+    riskLevel: 'HIGH',
+    riskScore: 91,
+    scamType: 'Cryptocurrency investment scam',
+    reports: 184,
+    exposure: '€2.8M',
+    summary: 'Urgent investment payments routed to newly created beneficiary accounts.',
+  },
+  {
+    id: 'route-gb-ro',
+    source: { city: 'London', country: 'United Kingdom', lat: 51.5072, lng: -0.1276 },
+    target: { city: 'Bucharest', country: 'Romania', lat: 44.4268, lng: 26.1025 },
+    riskLevel: 'MEDIUM',
+    riskScore: 58,
+    scamType: 'Business impersonation',
+    reports: 96,
+    exposure: '€740K',
+    summary: 'Invoice details changed shortly before high-value corporate transfers.',
+  },
+  {
+    id: 'route-us-de',
+    source: { city: 'New York', country: 'United States', lat: 40.7128, lng: -74.006 },
+    target: { city: 'Frankfurt', country: 'Germany', lat: 50.1109, lng: 8.6821 },
+    riskLevel: 'HIGH',
+    riskScore: 84,
+    scamType: 'Account takeover',
+    reports: 151,
+    exposure: '€1.9M',
+    summary: 'Unusual devices and beneficiary changes detected before international payments.',
+  },
+  {
+    id: 'route-ca-gb',
+    source: { city: 'Toronto', country: 'Canada', lat: 43.6532, lng: -79.3832 },
+    target: { city: 'Manchester', country: 'United Kingdom', lat: 53.4808, lng: -2.2426 },
+    riskLevel: 'LOW',
+    riskScore: 24,
+    scamType: 'Marketplace scam',
+    reports: 47,
+    exposure: '€180K',
+    summary: 'Low-value transfers with repeated marketplace payment references.',
+  },
+  {
+    id: 'route-in-au',
+    source: { city: 'Mumbai', country: 'India', lat: 19.076, lng: 72.8777 },
+    target: { city: 'Melbourne', country: 'Australia', lat: -37.8136, lng: 144.9631 },
+    riskLevel: 'MEDIUM',
+    riskScore: 63,
+    scamType: 'Remote-access scam',
+    reports: 118,
+    exposure: '€920K',
+    summary: 'Customers were pressured to authorize transfers during remote support sessions.',
+  },
+  {
+    id: 'route-ae-fr',
+    source: { city: 'Dubai', country: 'United Arab Emirates', lat: 25.2048, lng: 55.2708 },
+    target: { city: 'Paris', country: 'France', lat: 48.8566, lng: 2.3522 },
+    riskLevel: 'HIGH',
+    riskScore: 79,
+    scamType: 'Advance-fee scam',
+    reports: 83,
+    exposure: '€1.1M',
+    summary: 'Large advance payments requested before promised services were delivered.',
+  },
+  {
+    id: 'route-jp-us',
+    source: { city: 'Tokyo', country: 'Japan', lat: 35.6762, lng: 139.6503 },
+    target: { city: 'San Francisco', country: 'United States', lat: 37.7749, lng: -122.4194 },
+    riskLevel: 'LOW',
+    riskScore: 19,
+    scamType: 'Subscription deception',
+    reports: 39,
+    exposure: '€95K',
+    summary: 'Small recurring payments associated with misleading subscription renewals.',
+  },
+  {
+    id: 'route-br-es',
+    source: { city: 'São Paulo', country: 'Brazil', lat: -23.5505, lng: -46.6333 },
+    target: { city: 'Madrid', country: 'Spain', lat: 40.4168, lng: -3.7038 },
+    riskLevel: 'MEDIUM',
+    riskScore: 55,
+    scamType: 'Romance scam',
+    reports: 72,
+    exposure: '€510K',
+    summary: 'Repeated transfers to beneficiaries with limited prior payment history.',
+  },
+]
+
+export const globeLocations: GlobeLocation[] = [
+  ...new Map(
+    scamRoutes
+      .flatMap((route) => [route.source, route.target])
+      .map((location) => [location.country, location]),
+  ).values(),
+  { city: 'Shanghai', country: 'China', lat: 31.2304, lng: 121.4737 },
+].sort((first, second) => first.country.localeCompare(second.country))
 
 export const riskTrend: RiskTrendPoint[] = [
   { day: 'Mon', analyzed: 126, highRisk: 16 },

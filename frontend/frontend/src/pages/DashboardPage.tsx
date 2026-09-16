@@ -26,7 +26,13 @@ import { Link as RouterLink } from 'react-router'
 import { MetricCard } from '../components/common/MetricCard'
 import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
-import { recentTransactions, riskTrend } from '../mocks/dashboardData'
+import { ScamGlobeSection } from '../components/dashboard/ScamGlobeSection'
+import {
+  globeLocations,
+  recentTransactions,
+  riskTrend,
+  scamRoutes,
+} from '../mocks/dashboardData'
 
 const currency = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0,
@@ -56,13 +62,15 @@ export function DashboardPage() {
         }
       />
 
+      <ScamGlobeSection routes={scamRoutes} locations={globeLocations} />
+
       <Card
         sx={{
           overflow: 'hidden',
-          color: '#FFFFFF',
-          border: 0,
+          color: 'text.primary',
+          borderColor: 'rgba(14,147,132,0.18)',
           background:
-            'radial-gradient(circle at 82% 18%, rgba(100,226,210,0.25), transparent 27%), linear-gradient(115deg, #0A1D2C, #0E3B43)',
+            'radial-gradient(circle at 82% 18%, rgba(100,226,210,0.16), transparent 25%), linear-gradient(115deg, #FFFFFF, #F1FBF8)',
         }}
       >
         <CardContent
@@ -85,15 +93,15 @@ export function DashboardPage() {
                 placeItems: 'center',
                 flexShrink: 0,
                 borderRadius: 3,
-                color: '#0A342F',
-                backgroundColor: '#75E0D3',
+                color: '#FFFFFF',
+                backgroundColor: 'primary.main',
               }}
             >
               <GppGoodRoundedIcon />
             </Box>
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Typography variant="h2" color="inherit">
+                <Typography variant="h2">
                   Protection is active
                 </Typography>
                 <Chip
@@ -101,13 +109,13 @@ export function DashboardPage() {
                   icon={<CheckCircleRoundedIcon />}
                   label="All systems operational"
                   sx={{
-                    color: '#C9FFF8',
-                    backgroundColor: 'rgba(107,222,208,0.14)',
-                    '& .MuiChip-icon': { color: '#78E2D5' },
+                    color: '#087467',
+                    backgroundColor: 'rgba(14,147,132,0.1)',
+                    '& .MuiChip-icon': { color: '#0E9384' },
                   }}
                 />
               </Box>
-              <Typography sx={{ mt: 0.75, maxWidth: 620, color: 'rgba(255,255,255,0.68)' }}>
+              <Typography color="text.secondary" sx={{ mt: 0.75, maxWidth: 620 }}>
                 SafeFlow analyzed 1,208 payments this week and flagged 96 for additional review.
               </Typography>
             </Box>
@@ -118,9 +126,9 @@ export function DashboardPage() {
             variant="outlined"
             endIcon={<ArrowForwardRoundedIcon />}
             sx={{
-              color: '#FFFFFF',
-              borderColor: 'rgba(255,255,255,0.25)',
-              '&:hover': { borderColor: '#75E0D3', backgroundColor: 'rgba(255,255,255,0.06)' },
+              color: 'primary.dark',
+              borderColor: 'rgba(14,147,132,0.3)',
+              '&:hover': { borderColor: 'primary.main', backgroundColor: 'rgba(14,147,132,0.06)' },
             }}
           >
             View activity
@@ -131,7 +139,7 @@ export function DashboardPage() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
           gap: 2,
         }}
       >
@@ -176,7 +184,7 @@ export function DashboardPage() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1.7fr) minmax(280px, 0.8fr)' },
+          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.7fr) minmax(280px, 0.8fr)' },
           gap: 2,
         }}
       >

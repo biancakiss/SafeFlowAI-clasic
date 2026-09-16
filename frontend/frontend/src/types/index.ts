@@ -53,3 +53,22 @@ export interface RiskTrendPoint {
   analyzed: number
   highRisk: number
 }
+
+export interface GlobeLocation {
+  city: string
+  country: string
+  lat: number
+  lng: number
+}
+
+export interface ScamRoute {
+  id: string
+  source: GlobeLocation
+  target: GlobeLocation
+  riskLevel: RiskLevel
+  riskScore: number
+  scamType: string
+  reports: number
+  exposure: string
+  summary: string
+}
