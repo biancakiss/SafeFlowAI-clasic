@@ -1,6 +1,9 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
-
+#definesc datele primite si verific camputile obligatorii
+#formatul emailului
+#lungimea parolei
+#daca parolele coincid
 class RegisterRequest(BaseModel):
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
