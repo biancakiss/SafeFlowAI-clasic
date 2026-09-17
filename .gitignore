@@ -7,3 +7,5 @@ data/raw
 data/processed
 data/features
 ml/artifacts/
+frontend/frontend/node_modules/
+

@@ -7,6 +7,7 @@ import {
   Routes,
 } from 'react-router'
 import { AppShell } from '../components/layout/AppShell'
+import { AuthProvider, useAuth } from '../context/AuthContext'
 import { TransactionProvider } from '../context/TransactionContext'
 
 const DashboardPage = lazy(async () => ({
@@ -44,22 +45,58 @@ function PageLoader() {
   )
 }
 
+function ProtectedLayout() {
+  const { loading, isAuthenticated } = useAuth()
+
+  if (loading) {
+    return <PageLoader />
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  return (
+    <TransactionProvider>
+      <AppShell />
+    </TransactionProvider>
+  )
+}
+
+interface PublicRouteProps {
+  mode: 'login' | 'register'
+}
+
+function PublicRoute({ mode }: PublicRouteProps) {
+  const { loading, isAuthenticated } = useAuth()
+
+  if (loading) {
+    return <PageLoader />
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <AuthPage mode={mode} />
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <TransactionProvider>
+      <AuthProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route
               path="/login"
-              element={<AuthPage mode="login" />}
+              element={<PublicRoute mode="login" />}
             />
             <Route
               path="/register"
-              element={<AuthPage mode="register" />}
+              element={<PublicRoute mode="register" />}
             />
 
-            <Route element={<AppShell />}>
+            <Route element={<ProtectedLayout />}>
               <Route
                 index
                 element={<Navigate to="/dashboard" replace />}
@@ -92,7 +129,7 @@ export function AppRouter() {
             />
           </Routes>
         </Suspense>
-      </TransactionProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

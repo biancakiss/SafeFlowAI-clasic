@@ -37,6 +37,7 @@ import {
 } from '../mocks/dashboardData'
 
 import { useTransactions } from '../context/TransactionContext';
+import type { Transaction } from '../types'
 
 const currency = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0,
@@ -128,8 +129,9 @@ export function DashboardPage() {
         )`
       : '#EEF1F5'
 
-  const openAnalysis = (transactionId: string) => {
-    navigate(`/analyses/${transactionId}`)
+  const openAnalysis = (transaction: Transaction) => {
+    const analysisReference = transaction.analysisId?.toString() ?? transaction.id
+    navigate(`/analyses/${analysisReference}`)
   }
   return (
     <Stack spacing={3}>
@@ -416,11 +418,11 @@ export function DashboardPage() {
                       key={transaction.id}
                       hover
                       tabIndex={0}
-                      onClick={() => openAnalysis(transaction.id)}
+                      onClick={() => openAnalysis(transaction)}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault()
-                          openAnalysis(transaction.id)
+                          openAnalysis(transaction)
                         }
                       }}
                       sx={{

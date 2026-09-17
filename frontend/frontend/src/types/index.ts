@@ -4,6 +4,21 @@ export type TransactionStatus = 'Approved' | 'In review' | 'Blocked'
 
 export type RecommendedAction = 'ALLOW' | 'REVIEW' | 'BLOCK'
 
+export interface User {
+  id: number
+  first_name: string
+  last_name: string
+  email: string
+  bank_name: string
+  country: string
+}
+
+export interface RiskRule {
+  ruleName: string
+  points: number
+  reason: string
+}
+
 export interface Transaction {
   id: string
   beneficiary: string
@@ -16,7 +31,8 @@ export interface Transaction {
   status: TransactionStatus
   createdAt: string
   description?: string
-  triggeredRules?: string[]
+  analysisId?: number
+  triggeredRules?: RiskRule[]
   descriptionSignals?: string[]
   recommendedAction?: RecommendedAction
   explanation?: string
@@ -44,13 +60,15 @@ export interface RiskAnalysisRequest {
 }
 
 export interface RiskAnalysisResult {
+  analysisId?: number
+  userId?: number
+  createdAt?: string
   riskScore: number
   riskLevel: RiskLevel
-  triggeredRules: string[]
+  triggeredRules: RiskRule[]
   descriptionSignals: string[]
   recommendedAction: RecommendedAction
   explanation: string
-
 }
 
 export interface RiskTrendPoint {

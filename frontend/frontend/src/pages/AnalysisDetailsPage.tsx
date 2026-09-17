@@ -50,7 +50,9 @@ export function AnalysisDetailsPage() {
   const [actionFeedback, setActionFeedback] = useState<string | null>(null)
 
   const transaction = transactions.find(
-    (item) => item.id === analysisId,
+    (item) =>
+      item.id === analysisId ||
+      item.analysisId?.toString() === analysisId,
   )
 
   const handleStatusChange = async (
@@ -138,7 +140,9 @@ export function AnalysisDetailsPage() {
   }
 
   const detectedFactors = [
-    ...(transaction.triggeredRules ?? []),
+    ...(transaction.triggeredRules ?? []).map(
+      (rule) => `${rule.reason} (+${rule.points})`,
+    ),
     ...(transaction.descriptionSignals ?? []),
   ]
 
@@ -240,6 +244,12 @@ export function AnalysisDetailsPage() {
                 <InfoItem label="Transaction ID">
                   {transaction.id}
                 </InfoItem>
+
+                {transaction.analysisId !== undefined && (
+                  <InfoItem label="Backend analysis ID">
+                    {transaction.analysisId}
+                  </InfoItem>
+                )}
               </Stack>
 
               {transaction.description && (
