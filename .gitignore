@@ -9,3 +9,7 @@ data/features
 ml/artifacts/
 frontend/frontend/node_modules/
 
+# Node dependencies
+node_modules/
+**/node_modules/
+
