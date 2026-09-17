@@ -1,7 +1,15 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, func
+from sqlalchemy import (
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.session import Base
@@ -10,11 +18,25 @@ from app.database.session import Base
 class Analysis(Base):
     __tablename__ = "analyses"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True
+    )
 
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
+        index=True,
+    )
+
+    transaction_db_id: Mapped[int | None] = mapped_column(
+        ForeignKey("transactions.id"),
+        nullable=True,
+        index=True,
+    )
+
+    message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("messages.id"),
+        nullable=True,
         index=True,
     )
 
@@ -28,6 +50,11 @@ class Analysis(Base):
         nullable=True,
     )
 
+    model_score: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+
     risk_score: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
@@ -38,13 +65,17 @@ class Analysis(Base):
         nullable=False,
     )
 
-    triggered_rules: Mapped[list[dict[str, Any]]] = mapped_column(
+    triggered_rules: Mapped[
+        list[dict[str, Any]]
+    ] = mapped_column(
         JSON,
         nullable=False,
         default=list,
     )
 
-    features: Mapped[dict[str, Any]] = mapped_column(
+    features: Mapped[
+        dict[str, Any]
+    ] = mapped_column(
         JSON,
         nullable=False,
         default=dict,
