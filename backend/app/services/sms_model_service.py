@@ -62,4 +62,5 @@ def predict_sms(body: str) -> dict[str, Any]:
             "message-text-v1"
         ),
         "content_features": content_features,
+        "cleaned_text": cleaned_body,
     }

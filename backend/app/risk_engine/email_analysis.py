@@ -9,12 +9,8 @@ def analyze_email(
     subject: str | None,
     body: str,
 ) -> dict[str, Any]:
-    """
-    Runs the email model and calculates the contextual risk.
-    """
-
     ml_prediction = predict_email(
-        subject=subject,
+        subject=subject or "",
         body=body,
     )
 
@@ -24,9 +20,22 @@ def analyze_email(
     )
 
     ml_result = {
-        "prediction": ml_prediction["prediction"],
-        "spam_score": ml_prediction["spam_score"],
-        "score_type": ml_prediction["score_type"],
+        "prediction": ml_prediction[
+            "prediction"
+        ],
+        "spam_score": ml_prediction[
+            "spam_score"
+        ],
+        "model_score": ml_prediction[
+            "spam_score"
+        ],
+        "score_type": ml_prediction[
+            "score_type"
+        ],
+        "model_version": ml_prediction.get(
+            "model_version",
+            "email-spam-model-v1",
+        ),
     }
 
     risk_result = calculate_content_risk(
@@ -38,4 +47,8 @@ def analyze_email(
         "ml_result": ml_result,
         "content_features": content_features,
         "risk_result": risk_result,
+        "cleaned_text": ml_prediction.get(
+            "cleaned_text",
+            body,
+        ),
     }

@@ -8,11 +8,9 @@ from .content_scoring import (
 )
 
 
-def analyze_sms(body: str) -> dict[str, Any]:
-    """
-    Analyze an SMS using the ML model
-    and the explainable content risk rules.
-    """
+def analyze_sms(
+    body: str,
+) -> dict[str, Any]:
     prediction = predict_sms(body)
 
     ml_result = {
@@ -20,7 +18,7 @@ def analyze_sms(body: str) -> dict[str, Any]:
             "predicted_class"
         ],
         "spam_probability": prediction[
-            "spam_probability" 
+            "spam_probability"
         ],
         "model_score": prediction[
             "model_score"
@@ -28,22 +26,25 @@ def analyze_sms(body: str) -> dict[str, Any]:
         "score_type": prediction[
             "score_type"
         ],
+        "model_version": prediction[
+            "model_version"
+        ],
     }
 
+    content_features = prediction[
+        "content_features"
+    ]
+
     risk_result = calculate_content_risk(
-        ml_result,
-        prediction["content_features"],
+        ml_result=ml_result,
+        content_features=content_features,
     )
 
     return {
-        "ml_result": {
-            **ml_result,
-            "model_version": prediction[
-                "model_version"
-            ],
-        },
-        "content_features": prediction[
-            "content_features"
-        ],
+        "ml_result": ml_result,
+        "content_features": content_features,
         "risk_result": risk_result,
+        "cleaned_text": prediction.get(
+            "cleaned_text"
+        ),
     }
