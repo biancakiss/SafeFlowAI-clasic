@@ -13,6 +13,7 @@ from app.models.transaction import Transaction  # noqa: F401
 from app.api.analyses import router as analyses_router
 from app.api.transaction import (router as transactions_router,)
 from app.api.dashboard import router as dashboard_router
+from app.api.notification import router as notifications_router
 
 #creaza tabelele predefinite in modelele sql alchemy
 @asynccontextmanager
@@ -35,3 +36,4 @@ app.include_router(messages_router)
 app.include_router(analyses_router)
 app.include_router(transactions_router)
 app.include_router(dashboard_router)
+app.include_router(notifications_router)
