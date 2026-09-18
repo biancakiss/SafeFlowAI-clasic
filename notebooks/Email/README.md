@@ -10,11 +10,11 @@ Use Python 3.13 and the project virtual environment. From the repository root:
 
 Open `email_spam_classification.ipynb` in PyCharm, select `.venv` as the kernel, then choose **Restart Kernel and Run All**. The notebook locates the project root from the working directory. No database, running backend, ingestion job, or cleaning notebook is required. All preprocessing and prediction helpers are defined inside the notebook.
 
-`messages_cleaning.ipynb` is a separate, partial upstream cleaning notebook. The classifier directly reads the committed cleaned email CSV; rerunning ingestion is unnecessary.
+`../messages_cleaning.ipynb` is a separate, partial upstream cleaning notebook. The classifier directly reads the committed cleaned email CSV; rerunning ingestion is unnecessary.
 
 ## Data and preprocessing
 
-Training source: `data/processed/messages/spamassassin_emails_cleaned.csv` (4,518 rows). The CSV contains message_id, file_name, source_folder, sender, receiver, subject, date, body, label, source, message_type and text. Only **subject and body** enter the model. Labels are legitimate=0 and spam=1. Metadata such as source_folder can reveal labels and is excluded. The undocumented text column is rebuilt from subject and body.
+Training source: `../../data/processed/messages/spamassassin_emails_cleaned.csv` (4,518 rows). The CSV contains message_id, file_name, source_folder, sender, receiver, subject, date, body, label, source, message_type and text. Only **subject and body** enter the model. Labels are legitimate=0 and spam=1. Metadata such as source_folder can reveal labels and is excluded. The undocumented text column is rebuilt from subject and body.
 
 Notebook preprocessing applies Unicode NFKC normalization, collapses whitespace, and concatenates subject and body. Vectorizers lowercase text. Punctuation, numbers and stop words are retained by default; one candidate explicitly tests English stop-word removal. Stemming and lemmatization are not mandatory steps and are not applied. Prediction inputs must contain MIME-decoded plain-text subject/body; raw .eml parsing, attachments and HTML-to-text conversion are not implemented here.
 
@@ -60,7 +60,7 @@ The selected model in the verified run is **character TF-IDF + LinearSVC**. On t
 - Accuracy: **98.39%**; spam precision: **97.58%**; recall: **98.17%**; F1: **97.87%**.
 - 535 legitimate emails correct, 8 false spam alarms, 6 missed spam, 322 spam correct.
 
-The additional `data/evaluation/emails/synthetic_emails.csv` has the same 12 columns and 40 newly authored English examples (20 per class). It is loaded **after training**, without changing the original split, and is never used for selection or fitting. Checks reject schema mismatch, empty messages, duplicate IDs/content and overlap with the source corpus.
+The additional `../../data/evaluation/emails/synthetic_emails.csv` has the same 12 columns and 40 newly authored English examples (20 per class). It is loaded **after training**, without changing the original split, and is never used for selection or fitting. Checks reject schema mismatch, empty messages, duplicate IDs/content and overlap with the source corpus.
 
 The synthetic check scored **60% accuracy**: all 20 spam examples were detected, but **16 of 20 legitimate messages were incorrectly flagged**. This exposes a major generalization limitation. Synthetic writing, balanced classes and authored labels are not representative of a real inbox. Neither result justifies automatic email deletion/blocking. A separate, manually labeled recent inbox sample is needed; the notebook's optional external evaluation cell supports this.
 
