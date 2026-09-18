@@ -3,11 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
 from app.database.session import get_db
+from app.models.user import User
 from app.schemas.auth import (
     LoginRequest,
     RegisterRequest,
     TokenResponse,
     UserResponse,
+    UserUpdateRequest,
 )
 from app.services.auth_service import login_user, register_user
 
@@ -53,4 +55,27 @@ def login(
 def get_current_user_details(
     current_user=Depends(get_current_user),
 ):
+    return current_user
+
+@router.patch(
+    "/me/profile",
+    response_model=UserResponse,
+    name="Update current user profile",
+)
+def update_current_user(
+    data: UserUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    update_data = data.model_dump(
+        exclude_unset=True
+    )
+
+    for field, value in update_data.items():
+        value = value.strip()
+        setattr(current_user, field, value)
+
+    db.commit()
+    db.refresh(current_user)
+
     return current_user
