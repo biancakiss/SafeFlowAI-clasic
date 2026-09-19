@@ -1,4 +1,4 @@
-from backend.app.risk_engine.rules import evaluate_risk_rules
+from .rules import evaluate_risk_rules
 
 
 CONTENT_RISK_RULES = [

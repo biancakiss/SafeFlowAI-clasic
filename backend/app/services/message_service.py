@@ -7,12 +7,14 @@ from app.repositories.analysis_repository import (
 from app.repositories.message_repository import (
     create_message,
 )
+from app.risk_engine.email_analysis import (
+    analyze_email,
+)
+from app.risk_engine.sms_analysis import (
+    analyze_sms,
+)
 from app.schemas.analysis import AnalysisResponse
 from app.schemas.message import MessageRequest
-from app.services.email_model_service import (
-    predict_email,
-    prepare_email_text,
-)
 
 
 def get_risk_level(risk_score: int) -> str:
@@ -31,39 +33,70 @@ def analyze_message(
     data: MessageRequest,
     user_id: int,
 ) -> AnalysisResponse:
-    if data.message_type != "email":
+
+    if data.message_type == "email":
+        analysis_result = analyze_email(
+            subject=data.subject or "",
+            body=data.body,
+        )
+
+    elif data.message_type == "sms":
+        analysis_result = analyze_sms(
+            body=data.body,
+        )
+
+    else:
         raise HTTPException(
-            status_code=501,
+            status_code=400,
             detail=(
-                "The real model is currently "
-                "available only for emails."
+                "message_type must be "
+                "'email' or 'sms'."
             ),
         )
 
-    cleaned_message = prepare_email_text(
-        data.subject,
-        data.body,
+    ml_result = analysis_result[
+        "ml_result"
+    ]
+
+    risk_result = analysis_result[
+        "risk_result"
+    ]
+
+    predicted_class = ml_result.get(
+        "predicted_class",
+        ml_result.get("prediction"),
     )
 
-    prediction = predict_email(
-        data.subject,
-        data.body,
+    model_score = ml_result.get(
+        "model_score"
     )
 
-    predicted_class = prediction[
-        "predicted_class"
-    ]
+    risk_score = risk_result.get(
+        "risk_score",
+        risk_result.get(
+            "rule_score",
+            0,
+        ),
+    )
 
-    model_score = prediction[
-        "decision_margin"
-    ]
+    risk_level = risk_result.get(
+        "risk_level",
+        get_risk_level(risk_score),
+    )
 
-    risk_score = prediction[
-        "risk_score"
-    ]
+    triggered_rules = risk_result.get(
+        "triggered_rules",
+        [],
+    )
 
-    risk_level = get_risk_level(
-        risk_score
+    content_features = analysis_result.get(
+        "content_features",
+        {},
+    )
+
+    cleaned_text = analysis_result.get(
+        "cleaned_text",
+        data.body,
     )
 
     message = create_message(
@@ -74,7 +107,7 @@ def analyze_message(
         receiver=data.receiver,
         subject=data.subject,
         body=data.body,
-        cleaned_text=cleaned_message,
+        cleaned_text=cleaned_text,
     )
 
     analysis = create_analysis(
@@ -86,19 +119,11 @@ def analyze_message(
         model_score=model_score,
         risk_score=risk_score,
         risk_level=risk_level,
-        features={
-            "preprocessing_version": (
-                prediction[
-                    "preprocessing_version"
-                ]
-            ),
-            "score_type": "decision_margin",
-            "text_length": len(cleaned_message),
-        },
-        triggered_rules=[],
-        model_version=prediction[
+        features=content_features,
+        triggered_rules=triggered_rules,
+        model_version=ml_result.get(
             "model_version"
-        ],
+        ),
     )
 
     return AnalysisResponse(

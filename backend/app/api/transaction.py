@@ -34,6 +34,9 @@ from app.services.transaction_service import (
     analyze_transaction,
 )
 
+from app.services.notification_observer import (
+    TransactionStatusNotificationObserver,
+)
 
 router = APIRouter(
     prefix="/api/v1/transactions",
@@ -163,10 +166,21 @@ def update_transaction_status_endpoint(
             detail="Transaction not found",
         )
 
+    old_status = transaction.status
+
     updated_transaction = update_transaction_status(
         db,
         transaction=transaction,
         status=data.status,
     )
+
+    if old_status != updated_transaction.status:
+        observer = TransactionStatusNotificationObserver(db)
+
+        observer.on_status_changed(
+            transaction=updated_transaction,
+            old_status=old_status,
+            new_status=updated_transaction.status,
+        )
 
     return updated_transaction

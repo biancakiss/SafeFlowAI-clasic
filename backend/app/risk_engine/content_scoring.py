@@ -1,4 +1,4 @@
-from backend.app.risk_engine.content_rules import (
+from .content_rules import (
     evaluate_content_rules,
 )
 
@@ -29,8 +29,13 @@ def calculate_content_risk(
 
     rule_score = min(rule_score, 100)
 
+    risk_level = determine_content_risk_level(
+        rule_score
+    )
+
     return {
+        "risk_score": rule_score,
         "rule_score": rule_score,
-        "risk_level": determine_content_risk_level(rule_score),
+        "risk_level": risk_level,
         "triggered_rules": triggered_rules,
     }

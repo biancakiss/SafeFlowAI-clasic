@@ -1,0 +1,97 @@
+{
+  "model_version": "sms-tfidf-patterns-v2",
+  "selected_classifier": "sgd_log_loss",
+  "positive_label": "spam",
+  "threshold": 0.35,
+  "classes": [
+    "ham",
+    "spam"
+  ],
+  "n_rows": 5158,
+  "augmentation_rows": 40,
+  "split_rows": {
+    "training": 3610,
+    "validation": 774,
+    "test": 774
+  },
+  "class_counts": {
+    "ham": 4516,
+    "spam": 642
+  },
+  "candidate_validation_results": {
+    "logistic_regression": {
+      "threshold": 0.27499999999999997,
+      "accuracy": 0.9819121447028424,
+      "precision_spam": 0.9270833333333334,
+      "recall_spam": 0.9270833333333334,
+      "f1_spam": 0.9270833333333334
+    },
+    "sgd_log_loss": {
+      "threshold": 0.35,
+      "accuracy": 0.9857881136950905,
+      "precision_spam": 0.967032967032967,
+      "recall_spam": 0.9166666666666666,
+      "f1_spam": 0.9411764705882353
+    },
+    "complement_naive_bayes": {
+      "threshold": 0.175,
+      "accuracy": 0.979328165374677,
+      "precision_spam": 0.9545454545454546,
+      "recall_spam": 0.875,
+      "f1_spam": 0.9130434782608695
+    }
+  },
+  "metrics": {
+    "accuracy": 0.9844961240310077,
+    "precision_spam": 0.9117647058823529,
+    "recall_spam": 0.96875,
+    "f1_spam": 0.9393939393939394,
+    "confusion_matrix_labels_ham_spam": [
+      [
+        669,
+        9
+      ],
+      [
+        3,
+        93
+      ]
+    ],
+    "classification_report": {
+      "ham": {
+        "precision": 0.9955357142857143,
+        "recall": 0.9867256637168141,
+        "f1-score": 0.9911111111111112,
+        "support": 678.0
+      },
+      "spam": {
+        "precision": 0.9117647058823529,
+        "recall": 0.96875,
+        "f1-score": 0.9393939393939394,
+        "support": 96.0
+      },
+      "accuracy": 0.9844961240310077,
+      "macro avg": {
+        "precision": 0.9536502100840336,
+        "recall": 0.9777378318584071,
+        "f1-score": 0.9652525252525253,
+        "support": 774.0
+      },
+      "weighted avg": {
+        "precision": 0.9851455116930493,
+        "recall": 0.9844961240310077,
+        "f1-score": 0.9846965781849504,
+        "support": 774.0
+      }
+    },
+    "probability_examples": [
+      0.014986501648379533,
+      0.01760856553180165,
+      0.005690773236929318,
+      0.01440007760913213,
+      0.011718871242307466
+    ]
+  },
+  "trained_at_utc": "2026-09-18T10:19:16.086271+00:00",
+  "python": "3.13.15",
+  "scikit_learn": "1.9.1"
+}

@@ -1,6 +1,6 @@
 import re
 
-from backend.app.risk_engine.email_model import build_email_text
+from .email_model import build_email_text
 
 
 URL_PATTERN = re.compile(
