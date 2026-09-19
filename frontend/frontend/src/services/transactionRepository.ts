@@ -1,4 +1,5 @@
 import { recentTransactions } from '../mocks/dashboardData'
+import { environment } from '../config/environment'
 import type {
   RecommendedAction,
   RiskLevel,
@@ -6,6 +7,12 @@ import type {
   Transaction,
   TransactionStatus,
 } from '../types'
+import {
+  getBackendTransaction,
+  listBackendTransactions,
+  mapBackendTransaction,
+  updateBackendTransactionStatus,
+} from './transactionService'
 
 const STORAGE_KEY = 'safeflow_transactions_v1'
 
@@ -71,10 +78,18 @@ function writeTransactions(transactions: Transaction[]): void {
 
 export const transactionRepository: TransactionRepository = {
   async list() {
+    if (!environment.useMock) {
+      return listBackendTransactions()
+    }
+
     return readStoredTransactions()
   },
 
   async getById(id) {
+    if (!environment.useMock) {
+      return getBackendTransaction(id)
+    }
+
     const transactions = readStoredTransactions()
 
     return (
@@ -103,6 +118,24 @@ export const transactionRepository: TransactionRepository = {
   async updateStatus(id, status) {
     const transactions = readStoredTransactions()
     const transaction = transactions.find((item) => item.id === id)
+
+    if (!environment.useMock) {
+      const backendTransaction = await updateBackendTransactionStatus(
+        id,
+        status,
+      )
+
+      const updatedTransaction = transaction
+        ? { ...transaction, status }
+        : mapBackendTransaction(backendTransaction)
+
+      writeTransactions([
+        updatedTransaction,
+        ...transactions.filter((item) => item.id !== id),
+      ])
+
+      return updatedTransaction
+    }
 
     if (!transaction) {
       return null

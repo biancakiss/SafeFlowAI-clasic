@@ -34,7 +34,7 @@ export function createTransactionFromAnalysis(
   analysis: RiskAnalysisResult,
 ): Transaction {
   return {
-    id: generateTransactionId(),
+    id: analysis.transactionId ?? generateTransactionId(),
     analysisId: analysis.analysisId,
     beneficiary: payment.beneficiary,
     country: payment.country,
@@ -43,7 +43,7 @@ export function createTransactionFromAnalysis(
     channel: payment.paymentChannel,
     riskScore: analysis.riskScore,
     riskLevel: analysis.riskLevel,
-    status: getInitialStatus(analysis.recommendedAction),
+    status: analysis.status ?? getInitialStatus(analysis.recommendedAction),
     createdAt: analysis.createdAt ?? new Date().toISOString(),
     description: payment.description,
     triggeredRules: analysis.triggeredRules,

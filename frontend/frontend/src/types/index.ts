@@ -62,13 +62,50 @@ export interface RiskAnalysisRequest {
 export interface RiskAnalysisResult {
   analysisId?: number
   userId?: number
+  transactionId?: string
   createdAt?: string
   riskScore: number
   riskLevel: RiskLevel
+  status?: TransactionStatus
   triggeredRules: RiskRule[]
   descriptionSignals: string[]
   recommendedAction: RecommendedAction
   explanation: string
+}
+
+export interface DashboardSummary {
+  paymentsAnalyzed: number
+  highRiskPayments: number
+  potentialLossPrevented: number
+  safePaymentRate: number
+}
+
+export interface DashboardRiskActivityPoint {
+  date: string
+  analyzed: number
+  highRisk: number
+}
+
+export interface DashboardRiskDistribution {
+  total: number
+  lowRisk: number
+  mediumRisk: number
+  highRisk: number
+  lowRiskPercentage: number
+  mediumRiskPercentage: number
+  highRiskPercentage: number
+}
+
+export interface DashboardRecentAnalysis {
+  transactionId: string
+  beneficiary: string
+  country: string
+  amount: number
+  currency: string
+  riskLevel: RiskLevel
+  riskScore: number
+  status: TransactionStatus
+  createdAt: string
 }
 
 export interface RiskTrendPoint {
