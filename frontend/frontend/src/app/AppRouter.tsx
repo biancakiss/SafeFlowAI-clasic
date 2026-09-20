@@ -37,6 +37,14 @@ const AuthPage = lazy(async () => ({
   default: (await import('../pages/AuthPage')).AuthPage,
 }))
 
+const MessageAnalysisPage = lazy(async () => ({
+  default: (await import('../pages/MessageAnalysisPage')).MessageAnalysisPage,
+}))
+
+const UrlAnalysisPage = lazy(async () => ({
+  default: (await import('../pages/UrlAnalysisPage')).UrlAnalysisPage,
+}))
+
 function PageLoader() {
   return (
     <Box sx={{ minHeight: 360, display: 'grid', placeItems: 'center' }}>
@@ -108,6 +116,14 @@ export function AppRouter() {
               <Route
                 path="/analyze"
                 element={<AnalyzePaymentPage />}
+              />
+              <Route
+                path="/message-analysis"
+                element={<MessageAnalysisPage />}
+              />
+              <Route 
+              path="/url-analysis" 
+              element={<UrlAnalysisPage />} 
               />
               <Route
                 path="/transactions"

@@ -4,6 +4,8 @@ export type TransactionStatus = 'Approved' | 'In review' | 'Blocked'
 
 export type RecommendedAction = 'ALLOW' | 'REVIEW' | 'BLOCK'
 
+export type MessageType = 'sms' | 'email'
+
 export interface User {
   id: number
   first_name: string
@@ -131,4 +133,71 @@ export interface ScamRoute {
   reports: number
   exposure: string
   summary: string
+}
+
+
+export type MessageClassification =
+  | 'SAFE'
+  | 'SPAM'
+  | 'SUSPICIOUS'
+  | 'POTENTIAL_PHISHING'
+
+export type MessageRecommendedAction =
+  | 'NO_ACTION'
+  | 'VERIFY_SENDER'
+  | 'DO_NOT_INTERACT'
+  | 'REPORT_MESSAGE'
+
+export interface MessageAnalysisInput {
+  messageType: MessageType
+  sender: string
+  receiver: string
+  subject: string
+  body: string
+}
+
+export interface MessageAnalysisResult {
+  analysisId?: number
+  messageId?: number
+  messageType: MessageType
+  predictedClass?: string | null
+  modelScore?: number | null
+  riskScore: number
+  riskLevel: RiskLevel
+  classification: MessageClassification
+  recommendedAction: MessageRecommendedAction
+  triggeredRules: RiskRule[]
+  explanation: string
+  modelVersion?: string | null
+  createdAt?: string | null
+}
+
+
+export type UrlClassification =
+  | 'SAFE'
+  | 'SUSPICIOUS'
+  | 'POTENTIAL_PHISHING'
+
+export type UrlRecommendedAction =
+  | 'NO_ACTION'
+  | 'VERIFY_DOMAIN'
+  | 'DO_NOT_INTERACT'
+
+export interface UrlAnalysisInput {
+  url: string
+}
+
+export interface UrlAnalysisResult {
+  analysisId?: number
+  url: string
+  predictedClass?: string | null
+  modelScore?: number | null
+  riskScore: number
+  riskLevel: RiskLevel
+  classification: UrlClassification
+  recommendedAction: UrlRecommendedAction
+  triggeredRules: RiskRule[]
+  explanation: string
+  modelVersion?: string | null
+  createdAt?: string | null
 }

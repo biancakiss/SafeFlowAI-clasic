@@ -26,12 +26,24 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { BrandMark } from '../common/BrandMark'
 import { useAuth } from '../../context/AuthContext'
+import MarkEmailUnreadRoundedIcon from '@mui/icons-material/MarkEmailUnreadRounded'
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
 
 const drawerWidth = 252
 
 const navigation = [
   { label: 'Dashboard', path: '/dashboard', icon: DashboardRoundedIcon },
   { label: 'Analyze payment', path: '/analyze', icon: PaymentsRoundedIcon },
+  {
+    label: 'Message analysis',
+    path: '/message-analysis',
+    icon: MarkEmailUnreadRoundedIcon,
+  },
+  {
+    label: 'URL analysis',
+    path: '/url-analysis',
+    icon: LinkRoundedIcon,
+  },
   { label: 'Transactions', path: '/transactions', icon: ReceiptLongRoundedIcon },
   { label: 'Profile', path: '/profile', icon: PersonRoundedIcon },
 ]
