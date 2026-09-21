@@ -7,6 +7,7 @@ import {
   Routes,
 } from 'react-router'
 import { AppShell } from '../components/layout/AppShell'
+import { AuthProvider, useAuth } from '../context/AuthContext'
 import { TransactionProvider } from '../context/TransactionContext'
 
 const DashboardPage = lazy(async () => ({
@@ -36,6 +37,14 @@ const AuthPage = lazy(async () => ({
   default: (await import('../pages/AuthPage')).AuthPage,
 }))
 
+const MessageAnalysisPage = lazy(async () => ({
+  default: (await import('../pages/MessageAnalysisPage')).MessageAnalysisPage,
+}))
+
+const UrlAnalysisPage = lazy(async () => ({
+  default: (await import('../pages/UrlAnalysisPage')).UrlAnalysisPage,
+}))
+
 function PageLoader() {
   return (
     <Box sx={{ minHeight: 360, display: 'grid', placeItems: 'center' }}>
@@ -44,22 +53,58 @@ function PageLoader() {
   )
 }
 
+function ProtectedLayout() {
+  const { loading, isAuthenticated } = useAuth()
+
+  if (loading) {
+    return <PageLoader />
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  return (
+    <TransactionProvider>
+      <AppShell />
+    </TransactionProvider>
+  )
+}
+
+interface PublicRouteProps {
+  mode: 'login' | 'register'
+}
+
+function PublicRoute({ mode }: PublicRouteProps) {
+  const { loading, isAuthenticated } = useAuth()
+
+  if (loading) {
+    return <PageLoader />
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <AuthPage mode={mode} />
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <TransactionProvider>
+      <AuthProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route
               path="/login"
-              element={<AuthPage mode="login" />}
+              element={<PublicRoute mode="login" />}
             />
             <Route
               path="/register"
-              element={<AuthPage mode="register" />}
+              element={<PublicRoute mode="register" />}
             />
 
-            <Route element={<AppShell />}>
+            <Route element={<ProtectedLayout />}>
               <Route
                 index
                 element={<Navigate to="/dashboard" replace />}
@@ -71,6 +116,14 @@ export function AppRouter() {
               <Route
                 path="/analyze"
                 element={<AnalyzePaymentPage />}
+              />
+              <Route
+                path="/message-analysis"
+                element={<MessageAnalysisPage />}
+              />
+              <Route 
+              path="/url-analysis" 
+              element={<UrlAnalysisPage />} 
               />
               <Route
                 path="/transactions"
@@ -92,7 +145,7 @@ export function AppRouter() {
             />
           </Routes>
         </Suspense>
-      </TransactionProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

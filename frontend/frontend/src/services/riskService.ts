@@ -3,10 +3,11 @@ import type {
   RecommendedAction,
   RiskAnalysisResult,
   RiskLevel,
+  RiskRule,
 } from '../types'
 
 import { environment } from '../config/environment'
-import { apiRequest } from './apiClient'
+import { analyzeBackendTransaction } from './transactionService'
 
 const delay = (milliseconds: number) =>
   new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds))
@@ -35,28 +36,10 @@ const descriptionRules = [
   },
 ]
 
-interface BackendRiskResponse {
-  risk_score: number
-  risk_level: RiskLevel
-  triggered_rules: string[]
-}
-
 function getRecommendedAction(riskLevel: RiskLevel): RecommendedAction {
   if (riskLevel === 'HIGH') return 'BLOCK'
   if (riskLevel === 'MEDIUM') return 'REVIEW'
   return 'ALLOW'
-}
-
-function getExplanation(riskLevel: RiskLevel): string {
-  if (riskLevel === 'HIGH') {
-    return 'Multiple risk indicators require the payment to be stopped and reviewed.'
-  }
-
-  if (riskLevel === 'MEDIUM') {
-    return 'Some risk indicators were found. Ask the customer for additional verification.'
-  }
-
-  return 'No significant scam indicators were detected for this payment.'
 }
 
 export async function analyzePaymentMock(
@@ -65,11 +48,10 @@ export async function analyzePaymentMock(
   await delay(650)
 
   let riskScore = 0
-  const triggeredRules: string[] = []
+  const triggeredRules: RiskRule[] = []
   const descriptionSignals: string[] = []
 
-  //features hiden from user
-  //in real version these should be calculated by the backend and not exposed to the frontend
+  // These features remain hidden from the operator in the UI.
   const hiddenFeatures = {
     is_unusually_large: payment.amount >= 10_000 ? 1 : 0,
     is_unusual_country: knownCountries.has(payment.country) ? 0 : 1,
@@ -79,17 +61,29 @@ export async function analyzePaymentMock(
 
   if (hiddenFeatures.is_unusually_large) {
     riskScore += 20
-    triggeredRules.push('Amount is unusually large')
+    triggeredRules.push({
+      ruleName: 'unusually_large_amount',
+      points: 20,
+      reason: 'The transaction amount is unusually large.',
+    })
   }
 
   if (hiddenFeatures.is_unusual_country) {
     riskScore += 15
-    triggeredRules.push('Unusual destination country')
+    triggeredRules.push({
+      ruleName: 'unusual_country',
+      points: 15,
+      reason: 'The beneficiary country is unusual for this user.',
+    })
   }
 
   if (hiddenFeatures.is_risky_payment_channel) {
     riskScore += 10
-    triggeredRules.push('Higher-risk payment channel')
+    triggeredRules.push({
+      ruleName: 'risky_payment_channel',
+      points: 10,
+      reason: 'The payment channel is associated with increased risk.',
+    })
   }
 
   for (const rule of descriptionRules) {
@@ -120,50 +114,14 @@ export async function analyzePaymentMock(
     descriptionSignals,
     recommendedAction,
     explanation,
-  }
-}
-
-function toCurrentBackendPayload(payment: PaymentAnalysisInput) {
-  const amount = Number(payment.amount)
-
-  return {
-    is_new_beneficiary: 0,
-    is_unusually_large: amount >= 10000 ? 1 : 0,
-    recent_transaction_count: 0,
-    is_unusual_country:
-      !['Romania', 'Germany', 'United Kingdom'].includes(payment.country)
-        ? 1
-        : 0,
-    is_risky_payment_channel: /crypto|wire|api/i.test(
-      payment.paymentChannel,
-    )
-      ? 1
-      : 0,
+    createdAt: new Date().toISOString(),
   }
 }
 
 async function analyzePaymentApi(
   payment: PaymentAnalysisInput,
 ): Promise<RiskAnalysisResult> {
-  const token = localStorage.getItem('safeflow_access_token') ?? undefined
-
-  const response = await apiRequest<BackendRiskResponse>(
-    '/api/v1/risk/analyze',
-    {
-      method: 'POST',
-      token,
-      body: JSON.stringify(toCurrentBackendPayload(payment)),
-    },
-  )
-
-  return {
-    riskScore: response.risk_score,
-    riskLevel: response.risk_level,
-    triggeredRules: response.triggered_rules,
-    descriptionSignals: [],
-    recommendedAction: getRecommendedAction(response.risk_level),
-    explanation: getExplanation(response.risk_level),
-  }
+  return analyzeBackendTransaction(payment)
 }
 
 export async function analyzePayment(
@@ -175,4 +133,3 @@ export async function analyzePayment(
 
   return analyzePaymentApi(payment)
 }
-

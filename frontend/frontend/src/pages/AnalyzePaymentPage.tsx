@@ -18,10 +18,12 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
-import { Link as RouterLink } from 'react-router'
+import { Link as RouterLink, useNavigate } from 'react-router'
 import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
 import { analyzePayment } from '../services/riskService'
+import { ApiError } from '../services/apiClient'
+import { useAuth } from '../context/AuthContext'
 
 import { useTransactions } from '../context/TransactionContext'
 import { createTransactionFromAnalysis } from '../services/transactionMapper'
@@ -30,6 +32,7 @@ import type {
   RecommendedAction,
   RiskAnalysisResult,
   RiskLevel,
+  TransactionStatus,
 } from '../types'
 
 interface PaymentFormState {
@@ -192,13 +195,16 @@ function RiskScoreRing({ score, level }: RiskScoreRingProps) {
 }
 
 export function AnalyzePaymentPage() {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
   const [form, setForm] = useState<PaymentFormState>(initialForm)
   const [result, setResult] = useState<RiskAnalysisResult | null>(null)
   const [loading, setLoading] = useState(false)
+  const [transactionId, setTransactionId] = useState<string | null>(null)
   const [decisionFeedback, setDecisionFeedback] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState<PaymentFormErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const { saveTransaction } = useTransactions()
+  const { saveTransaction, updateTransactionStatus } = useTransactions()
 
   const updateForm = <Key extends keyof PaymentFormState>(
     field: Key,
@@ -210,6 +216,7 @@ export function AnalyzePaymentPage() {
     }))
 
     setResult(null)
+    setTransactionId(null)
     setDecisionFeedback(null)
 
     setSubmitError(null)
@@ -234,6 +241,7 @@ export function AnalyzePaymentPage() {
 
   setLoading(true)
   setResult(null)
+  setTransactionId(null)
   setDecisionFeedback(null)
   setSubmitError(null)
 
@@ -255,11 +263,18 @@ export function AnalyzePaymentPage() {
       analysis,
     )
 
-    await saveTransaction(transaction)
+    const savedTransaction = await saveTransaction(transaction)
 
+    setTransactionId(savedTransaction.id)
     setResult(analysis)
 
   } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      logout()
+      navigate('/login', { replace: true })
+      return
+    }
+
     setSubmitError(
       error instanceof Error
         ? error.message
@@ -270,20 +285,45 @@ export function AnalyzePaymentPage() {
   }
 }
 
-  const handleDecision = (decision: string) => {
-    setDecisionFeedback(`Demo decision recorded: ${decision}.`)
+  const handleDecision = async (action: RecommendedAction) => {
+    if (!transactionId) {
+      setDecisionFeedback('Analyze a payment before changing its status.')
+      return
+    }
+
+    const statusByAction: Record<RecommendedAction, TransactionStatus> = {
+      ALLOW: 'Approved',
+      REVIEW: 'In review',
+      BLOCK: 'Blocked',
+    }
+    const updatedTransaction = await updateTransactionStatus(
+      transactionId,
+      statusByAction[action],
+    )
+
+    setDecisionFeedback(
+      updatedTransaction
+        ? `Transaction status saved: ${statusByAction[action]}.`
+        : 'The transaction status could not be updated.',
+    )
   }
 
   const handleReset = () => {
     setForm({ ...initialForm })
     setResult(null)
+    setTransactionId(null)
     setFormErrors({})
     setSubmitError(null)
     setDecisionFeedback(null)
   }
 
   const factors = result
-    ? [...result.triggeredRules, ...result.descriptionSignals]
+    ? [
+        ...result.triggeredRules.map(
+          (rule) => `${rule.reason} (+${rule.points})`,
+        ),
+        ...result.descriptionSignals,
+      ]
     : []
 
   return (
@@ -642,7 +682,7 @@ export function AnalyzePaymentPage() {
                     <Button
                       variant="contained"
                       color="error"
-                      onClick={() => handleDecision('Block transaction')}
+                      onClick={() => void handleDecision('BLOCK')}
                       sx={{ flex: 1 }}
                     >
                       Block transaction
@@ -653,7 +693,7 @@ export function AnalyzePaymentPage() {
                     <Button
                       variant="contained"
                       color="success"
-                      onClick={() => handleDecision('Allow transaction')}
+                      onClick={() => void handleDecision('ALLOW')}
                       sx={{ flex: 1 }}
                     >
                       Allow transaction
@@ -662,7 +702,7 @@ export function AnalyzePaymentPage() {
 
                   <Button
                     variant="outlined"
-                    onClick={() => handleDecision('Flag for review')}
+                    onClick={() => void handleDecision('REVIEW')}
                     sx={{
                       flex: 1,
                       color: actionConfig[result.recommendedAction].color,

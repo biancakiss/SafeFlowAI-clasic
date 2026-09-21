@@ -278,7 +278,7 @@ export function TransactionsPage() {
                         <TableCell align="right">
                           <Button
                             component={RouterLink}
-                            to={`/analyses/${transaction.id}`}
+                            to={`/analyses/${transaction.analysisId ?? transaction.id}`}
                             size="small"
                             endIcon={
                               <ArrowForwardRoundedIcon />

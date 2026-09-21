@@ -4,6 +4,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Alert,
   LinearProgress,
   Stack,
   Table,
@@ -22,7 +23,11 @@ import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded'
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import { LineChart } from '@mui/x-charts/LineChart'
-import { Link as RouterLink } from 'react-router'
+import {
+  Link as RouterLink,
+  useNavigate,
+} from 'react-router'
+import { useEffect, useState } from 'react'
 import { MetricCard } from '../components/common/MetricCard'
 import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
@@ -33,21 +38,178 @@ import {
   scamRoutes,
 } from '../mocks/dashboardData'
 
-import { useTransactions } from '../context/TransactionContext';
+import { useTransactions } from '../context/TransactionContext'
+import { useAuth } from '../context/AuthContext'
+import { environment } from '../config/environment'
+import { ApiError } from '../services/apiClient'
+import {
+  getDashboardData,
+  type DashboardData,
+} from '../services/dashboardService'
+import type { Transaction } from '../types'
 
 const currency = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0,
 })
 
-const distribution = [
-  { label: 'Low risk', value: 74, color: '#20A464' },
-  { label: 'Medium risk', value: 18, color: '#E18A2D' },
-  { label: 'High risk', value: 8, color: '#D95555' },
-]
-
-
 export function DashboardPage() {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
   const { transactions } = useTransactions()
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [dashboardError, setDashboardError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (environment.useMock) return
+
+    let active = true
+
+    void getDashboardData()
+      .then((data) => {
+        if (active) setDashboardData(data)
+      })
+      .catch((error: unknown) => {
+        if (!active) return
+
+        if (error instanceof ApiError && error.status === 401) {
+          logout()
+          return
+        }
+
+        setDashboardError(
+          error instanceof Error
+            ? error.message
+            : 'Dashboard data could not be loaded.',
+        )
+      })
+
+    return () => {
+      active = false
+    }
+  }, [logout])
+
+  const totalTransactions =
+    dashboardData?.summary.paymentsAnalyzed ?? transactions.length
+
+  const lowRiskCount = transactions.filter(
+    (transaction) => transaction.riskLevel === 'LOW',
+  ).length
+
+  const mediumRiskCount = transactions.filter(
+    (transaction) => transaction.riskLevel === 'MEDIUM',
+  ).length
+
+  const localHighRiskCount = transactions.filter(
+    (transaction) => transaction.riskLevel === 'HIGH',
+  ).length
+
+  const highRiskCount =
+    dashboardData?.summary.highRiskPayments ?? localHighRiskCount
+
+  const safePaymentRate = dashboardData
+    ? dashboardData.summary.safePaymentRate.toFixed(1)
+    : totalTransactions > 0
+      ? ((lowRiskCount / totalTransactions) * 100).toFixed(1)
+      : '0.0'
+
+  const metricCurrencyCode =
+    dashboardData?.recentAnalyses[0]?.currency ??
+    transactions.find((transaction) => transaction.currency)?.currency ??
+    'EUR'
+
+  const blockedAmount = transactions
+    .filter(
+      (transaction) =>
+        transaction.status === 'Blocked' &&
+        transaction.currency === metricCurrencyCode,
+    )
+    .reduce((total, transaction) => total + transaction.amount, 0)
+
+  const preventedLoss = dashboardData?.summary.potentialLossPrevented ?? blockedAmount
+
+  const metricAmountFormatter = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: metricCurrencyCode,
+    maximumFractionDigits: 0,
+  })
+
+  const lowRiskPercentage = dashboardData?.riskDistribution.lowRiskPercentage ??
+    (totalTransactions > 0
+      ? Math.round((lowRiskCount / totalTransactions) * 100)
+      : 0)
+
+  const mediumRiskPercentage = dashboardData?.riskDistribution.mediumRiskPercentage ??
+    (totalTransactions > 0
+      ? Math.round((mediumRiskCount / totalTransactions) * 100)
+      : 0)
+
+  const highRiskPercentage = dashboardData?.riskDistribution.highRiskPercentage ??
+    (totalTransactions > 0
+      ? 100 - lowRiskPercentage - mediumRiskPercentage
+      : 0)
+
+  const distribution = [
+    {
+      label: 'Low risk',
+      value: lowRiskPercentage,
+      color: '#20A464',
+    },
+    {
+      label: 'Medium risk',
+      value: mediumRiskPercentage,
+      color: '#E18A2D',
+    },
+    {
+      label: 'High risk',
+      value: highRiskPercentage,
+      color: '#D95555',
+    },
+  ]
+
+  const distributionBackground =
+    totalTransactions > 0
+      ? `conic-gradient(
+          #20A464 0 ${lowRiskPercentage}%,
+          #E18A2D ${lowRiskPercentage}% ${
+            lowRiskPercentage + mediumRiskPercentage
+          }%,
+          #D95555 ${
+            lowRiskPercentage + mediumRiskPercentage
+          }% 100%
+        )`
+      : '#EEF1F5'
+
+  const riskActivity = dashboardData?.riskActivity ?? riskTrend.map((point) => ({
+    date: point.day,
+    analyzed: point.analyzed,
+    highRisk: point.highRisk,
+  }))
+  const recentAnalyses = dashboardData?.recentAnalyses ?? transactions.slice(0, 4).map(
+    (transaction) => ({
+      transactionId: transaction.id,
+      beneficiary: transaction.beneficiary,
+      country: transaction.country,
+      amount: transaction.amount,
+      currency: transaction.currency,
+      riskLevel: transaction.riskLevel,
+      riskScore: transaction.riskScore,
+      status: transaction.status,
+      createdAt: transaction.createdAt,
+    }),
+  )
+
+  const openAnalysis = (transaction: Transaction | { transactionId: string }) => {
+    if ('transactionId' in transaction) {
+      navigate(`/analyses/${transaction.transactionId}`)
+      return
+    }
+
+    navigate(`/analyses/${transaction.analysisId?.toString() ?? transaction.id}`)
+  }
+
+  const dashboardLoading =
+    !environment.useMock && dashboardData === null && dashboardError === null
+
   return (
     <Stack spacing={3}>
       <PageHeader
@@ -64,6 +226,9 @@ export function DashboardPage() {
           </Button>
         }
       />
+
+      {dashboardLoading && <LinearProgress />}
+      {dashboardError && <Alert severity="error">{dashboardError}</Alert>}
 
       <ScamGlobeSection routes={scamRoutes} locations={globeLocations} />
 
@@ -119,7 +284,7 @@ export function DashboardPage() {
                 />
               </Box>
               <Typography color="text.secondary" sx={{ mt: 0.75, maxWidth: 620 }}>
-                SafeFlow analyzed 1,208 payments this week and flagged 96 for additional review.
+                SafeFlow analyzed {totalTransactions.toLocaleString('en-GB')} payments and flagged {highRiskCount.toLocaleString('en-GB')} as high risk.
               </Typography>
             </Box>
           </Box>
@@ -148,36 +313,36 @@ export function DashboardPage() {
       >
         <MetricCard
           title="Payments analyzed"
-          value="1,208"
-          change="12.4%"
-          helper="vs. last week"
+          value={totalTransactions.toLocaleString('en-GB')}
+          change="Live"
+          helper="from transactions"
           icon={<PaymentsRoundedIcon />}
           color="#3156D3"
           backgroundColor="#EDF1FF"
         />
         <MetricCard
           title="High-risk payments"
-          value="96"
-          change="8.1%"
-          helper="more detected"
+          value={(dashboardData?.summary.highRiskPayments ?? highRiskCount).toLocaleString('en-GB')}
+          change="Live"
+          helper="high-risk records"
           icon={<ReportProblemRoundedIcon />}
           color="#C34242"
           backgroundColor="#FDEDED"
         />
         <MetricCard
           title="Potential loss prevented"
-          value="€184K"
-          change="18.7%"
-          helper="vs. last week"
+          value={metricAmountFormatter.format(preventedLoss)}
+          change="Live"
+          helper="blocked payment value"
           icon={<SavingsRoundedIcon />}
           color="#14804A"
           backgroundColor="#EAF8F0"
         />
         <MetricCard
           title="Safe payment rate"
-          value="92.1%"
-          change="2.3%"
-          helper="improvement"
+          value={`${safePaymentRate}%`}
+          change="Live"
+          helper="low-risk payment rate"
           icon={<GppGoodRoundedIcon />}
           color="#0E9384"
           backgroundColor="#E8F8F5"
@@ -204,17 +369,17 @@ export function DashboardPage() {
             </Box>
             <LineChart
               height={300}
-              xAxis={[{ scaleType: 'point', data: riskTrend.map((point) => point.day) }]}
+              xAxis={[{ scaleType: 'point', data: riskActivity.map((point) => point.date) }]}
               series={[
                 {
-                  data: riskTrend.map((point) => point.analyzed),
+                  data: riskActivity.map((point) => point.analyzed),
                   label: 'Analyzed',
                   color: '#3156D3',
                   area: true,
                   showMark: false,
                 },
                 {
-                  data: riskTrend.map((point) => point.highRisk),
+                  data: riskActivity.map((point) => point.highRisk),
                   label: 'High risk',
                   color: '#D95555',
                   showMark: false,
@@ -240,8 +405,7 @@ export function DashboardPage() {
                   display: 'grid',
                   placeItems: 'center',
                   borderRadius: '50%',
-                  background:
-                    'conic-gradient(#20A464 0 74%, #E18A2D 74% 92%, #D95555 92% 100%)',
+                  background: distributionBackground,
                 }}
               >
                 <Box
@@ -256,7 +420,9 @@ export function DashboardPage() {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ fontSize: 24, fontWeight: 750 }}>1,208</Typography>
+                    <Typography sx={{ fontSize: 24, fontWeight: 750 }}>
+                    {totalTransactions.toLocaleString('en-GB')}
+                  </Typography>
                     <Typography variant="caption" color="text.secondary">
                       total
                     </Typography>
@@ -327,11 +493,30 @@ export function DashboardPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {transactions.slice(0, 4).map((transaction) => (
-                  <TableRow key={transaction.id} hover>
+                {recentAnalyses.map((transaction) => (
+                  <TableRow
+                      key={transaction.transactionId}
+                      hover
+                      tabIndex={0}
+                      onClick={() => openAnalysis(transaction)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          openAnalysis(transaction)
+                        }
+                      }}
+                      sx={{
+                        cursor: 'pointer',
+                        '&:focus-visible': {
+                          outline: '2px solid',
+                          outlineColor: 'primary.main',
+                          outlineOffset: -2,
+                        },
+                      }}
+                    >
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 650 }}>
-                        {transaction.id}
+                        {transaction.transactionId}
                       </Typography>
                     </TableCell>
                     <TableCell>

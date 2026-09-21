@@ -23,14 +23,27 @@ import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
-import { NavLink, Outlet, useLocation } from 'react-router'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { BrandMark } from '../common/BrandMark'
+import { useAuth } from '../../context/AuthContext'
+import MarkEmailUnreadRoundedIcon from '@mui/icons-material/MarkEmailUnreadRounded'
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
 
 const drawerWidth = 252
 
 const navigation = [
   { label: 'Dashboard', path: '/dashboard', icon: DashboardRoundedIcon },
   { label: 'Analyze payment', path: '/analyze', icon: PaymentsRoundedIcon },
+  {
+    label: 'Message analysis',
+    path: '/message-analysis',
+    icon: MarkEmailUnreadRoundedIcon,
+  },
+  {
+    label: 'URL analysis',
+    path: '/url-analysis',
+    icon: LinkRoundedIcon,
+  },
   { label: 'Transactions', path: '/transactions', icon: ReceiptLongRoundedIcon },
   { label: 'Profile', path: '/profile', icon: PersonRoundedIcon },
 ]
@@ -41,6 +54,16 @@ interface DrawerContentProps {
 
 function DrawerContent({ onNavigate }: DrawerContentProps) {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const displayName = [user?.first_name, user?.last_name]
+    .filter(Boolean)
+    .join(' ') || 'SafeFlow analyst'
+  const initials = [user?.first_name?.[0], user?.last_name?.[0]]
+    .filter(Boolean)
+    .join('')
+    .toUpperCase() || 'SF'
 
   return (
     <Box
@@ -108,18 +131,26 @@ function DrawerContent({ onNavigate }: DrawerContentProps) {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
           <Avatar sx={{ width: 36, height: 36, bgcolor: '#2BB6A8', fontSize: 13 }}>
-            DP
+            {initials}
           </Avatar>
           <Box sx={{ minWidth: 0, flexGrow: 1 }}>
             <Typography variant="body2" noWrap sx={{ fontWeight: 650 }}>
-              Darius Pop
+              {displayName}
             </Typography>
             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }} noWrap>
-              Risk analyst
+              {user?.bank_name ?? 'Risk analyst'}
             </Typography>
           </Box>
           <Tooltip title="Sign out">
-            <IconButton size="small" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+            <IconButton
+              size="small"
+              aria-label="Sign out"
+              onClick={() => {
+                logout()
+                navigate('/login', { replace: true })
+              }}
+              sx={{ color: 'rgba(255,255,255,0.6)' }}
+            >
               <LogoutRoundedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -133,6 +164,11 @@ export function AppShell() {
   const theme = useTheme()
   const desktop = useMediaQuery(theme.breakpoints.up('lg'))
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { user } = useAuth()
+  const initials = [user?.first_name?.[0], user?.last_name?.[0]]
+    .filter(Boolean)
+    .join('')
+    .toUpperCase() || 'SF'
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -189,7 +225,7 @@ export function AppShell() {
               </IconButton>
             </Tooltip>
             <Avatar sx={{ ml: 1.25, width: 36, height: 36, bgcolor: '#123E4A', fontSize: 13 }}>
-              DP
+              {initials}
             </Avatar>
           </Toolbar>
         </AppBar>

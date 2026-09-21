@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local frontend configuration and build metadata
+.env
+.env.*
+!.env.example
+.tmp/

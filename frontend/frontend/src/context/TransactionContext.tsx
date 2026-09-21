@@ -7,7 +7,9 @@ import {
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
+import { ApiError } from '../services/apiClient'
 import { transactionRepository } from '../services/transactionRepository'
+import { useAuth } from './AuthContext'
 import type {
   Transaction,
   TransactionStatus,
@@ -40,6 +42,7 @@ interface TransactionProviderProps {
 export function TransactionProvider({
   children,
 }: TransactionProviderProps) {
+  const { logout } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -53,14 +56,18 @@ export function TransactionProvider({
         await transactionRepository.list()
 
       setTransactions(storedTransactions)
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        logout()
+      }
+
       setError(
         'Transactions could not be loaded. Please refresh the page.',
       )
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [logout])
 
   useEffect(() => {
     void refreshTransactions()
@@ -110,7 +117,11 @@ export function TransactionProvider({
         )
 
         return updatedTransaction
-      } catch {
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          logout()
+        }
+
         setError(
           'The transaction status could not be updated.',
         )
@@ -118,7 +129,7 @@ export function TransactionProvider({
         return null
       }
     },
-    [],
+    [logout],
   )
 
   const getTransactionById = useCallback(
