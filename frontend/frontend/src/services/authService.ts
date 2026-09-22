@@ -21,6 +21,16 @@ interface TokenResponse {
   token_type: string
 }
 
+interface AuthMessageResponse {
+  message: string
+}
+
+export interface ResetPasswordData {
+  email: string
+  code: string
+  new_password: string
+}
+
 export async function registerUser(data: RegistrationData): Promise<User> {
   return apiRequest<User>('/api/v1/auth/register', {
     method: 'POST',
@@ -43,6 +53,34 @@ export async function loginUser(
 
 export async function getCurrentUser(token: string): Promise<User> {
   return apiRequest<User>('/api/v1/auth/me', { token })
+}
+
+export async function requestPasswordReset(
+  email: string,
+): Promise<AuthMessageResponse> {
+  return apiRequest<AuthMessageResponse>('/api/v1/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export async function verifyPasswordResetCode(
+  email: string,
+  code: string,
+): Promise<AuthMessageResponse> {
+  return apiRequest<AuthMessageResponse>('/api/v1/auth/verify-reset-code', {
+    method: 'POST',
+    body: JSON.stringify({ email, code }),
+  })
+}
+
+export async function resetPassword(
+  data: ResetPasswordData,
+): Promise<AuthMessageResponse> {
+  return apiRequest<AuthMessageResponse>('/api/v1/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
 }
 
 export function getStoredToken(): string | null {

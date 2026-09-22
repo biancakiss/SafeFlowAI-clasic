@@ -168,6 +168,12 @@ function UrlResultCard({
   }
 
   const classificationStyle = getClassificationStyle(result.classification)
+  const recommendedActionBackground =
+    result.riskLevel === 'HIGH'
+      ? '#FEE4E2'
+      : result.riskLevel === 'MEDIUM'
+        ? '#FFF4D6'
+        : '#EAF8F0'
 
   return (
     <Card sx={{ ...analysisPanelSx, height: '100%' }}>
@@ -279,7 +285,7 @@ function UrlResultCard({
             icon={false}
             sx={{
               borderRadius: 2.5,
-              backgroundColor: '#F7FAFC',
+              backgroundColor: recommendedActionBackground,
               border: '1px solid #E2E8F0',
               color: '#0B1F3A',
             }}
