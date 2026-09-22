@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Safe URL",
+    "url": "https://www.example.com/home",
+    "expected_prediction": "safe"
+  },
+  {
+    "name": "Suspicious URL with IP and HTTP",
+    "url": "http://192.168.1.10/login",
+    "expected_prediction": "suspicious"
+  },
+  {
+    "name": "Suspicious shortened URL",
+    "url": "https://bit.ly/verify-account",
+    "expected_prediction": "suspicious"
+  },
+  {
+    "name": "Suspicious punycode URL",
+    "url": "https://xn--paypa1-9za.com/secure-login",
+    "expected_prediction": "suspicious"
+  },
+  {
+    "name": "Suspicious URL with many subdomains",
+    "url": "https://login.account.verify.security.example.com/update",
+    "expected_prediction": "suspicious"
+  },
+  {
+    "name": "Safe HTTPS URL",
+    "url": "https://www.example.org/about",
+    "expected_prediction": "safe"
+  }
+]
