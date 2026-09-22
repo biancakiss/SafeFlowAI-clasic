@@ -48,9 +48,14 @@ def clean_text(text: str | None) -> str:
     if not text:
         return ""
 
-    text = BeautifulSoup(
-        str(text),
-        "html.parser",
+    html_pattern = re.compile(
+    r"<[a-zA-Z][^>]*>"
+)
+
+    if html_pattern.search(text):  
+        text = BeautifulSoup(
+        text,
+        "html.parser"
     ).get_text(" ")
 
     text = text.lower()
