@@ -42,6 +42,14 @@ DEFAULT_RISK_RULES: list[dict[str, Any]] = [
         "points": 10,
         "reason": "The payment channel is associated with increased risk.",
     },
+    {
+    "rule_name": "ml_predicted_fraud",
+    "feature": "ml_predicted_fraud",
+    "operator": "equals",
+    "expected_value": 1,
+    "points": 30,
+    "reason": "The ML model classified the transaction as fraud.",
+    },
 ]
 
 
