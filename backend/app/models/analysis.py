@@ -10,7 +10,7 @@ from sqlalchemy import (
     String,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.session import Base
 
@@ -90,4 +90,15 @@ class Analysis(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
+    )
+
+    url_db_id: Mapped[int | None] = mapped_column(
+        ForeignKey("urls.id"),
+        nullable=True,
+        index=True,
+    )
+
+    url = relationship(
+        "Url",
+        back_populates="analyses",
     )
