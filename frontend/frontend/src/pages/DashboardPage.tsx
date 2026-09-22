@@ -184,19 +184,22 @@ export function DashboardPage() {
     analyzed: point.analyzed,
     highRisk: point.highRisk,
   }))
-  const recentAnalyses = dashboardData?.recentAnalyses ?? transactions.slice(0, 4).map(
-    (transaction) => ({
-      transactionId: transaction.id,
-      beneficiary: transaction.beneficiary,
-      country: transaction.country,
-      amount: transaction.amount,
-      currency: transaction.currency,
-      riskLevel: transaction.riskLevel,
-      riskScore: transaction.riskScore,
-      status: transaction.status,
-      createdAt: transaction.createdAt,
-    }),
-  )
+  // The transaction context is the live source for the table. This is
+  // important because it immediately reflects Approved/Blocked decisions.
+  // The dashboard endpoint is used as a fallback while transactions load.
+  const recentAnalyses = transactions.length > 0
+    ? transactions.slice(0, 4).map((transaction) => ({
+        transactionId: transaction.id,
+        beneficiary: transaction.beneficiary,
+        country: transaction.country,
+        amount: transaction.amount,
+        currency: transaction.currency,
+        riskLevel: transaction.riskLevel,
+        riskScore: transaction.riskScore,
+        status: transaction.status,
+        createdAt: transaction.createdAt,
+      }))
+    : dashboardData?.recentAnalyses ?? []
 
   const openAnalysis = (transaction: Transaction | { transactionId: string }) => {
     if ('transactionId' in transaction) {
@@ -487,7 +490,7 @@ export function DashboardPage() {
                   <TableCell>Transaction</TableCell>
                   <TableCell>Beneficiary</TableCell>
                   <TableCell>Amount</TableCell>
-                  <TableCell>Risk</TableCell>
+                  <TableCell>Risk level</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Time</TableCell>
                 </TableRow>
@@ -533,15 +536,21 @@ export function DashboardPage() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                        <RiskLevelChip level={transaction.riskLevel} />
-                        <Typography variant="caption" color="text.secondary">
-                          {transaction.riskScore}/100
-                        </Typography>
-                      </Stack>
+                      <RiskLevelChip level={transaction.riskLevel} />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">{transaction.status}</Typography>
+                      <Chip
+                        size="small"
+                        label={transaction.status}
+                        color={
+                          transaction.status === 'Blocked'
+                            ? 'error'
+                            : transaction.status === 'Approved'
+                              ? 'success'
+                              : 'warning'
+                        }
+                        variant="outlined"
+                      />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">

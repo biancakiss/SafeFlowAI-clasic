@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   Divider,
   MenuItem,
@@ -15,6 +16,7 @@ import {
 } from '@mui/material'
 
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
+import BlockRoundedIcon from '@mui/icons-material/BlockRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
@@ -46,13 +48,13 @@ interface PaymentFormState {
 }
 
 const initialForm: PaymentFormState = {
-  amount: '14500',
-  currency: 'USD',
-  date: new Date().toISOString().slice(0, 10),
-  beneficiary: 'Maxwell Okonkwo',
-  country: 'United Kingdom',
-  paymentChannel: 'Bank Transfer (SWIFT)',
-  description: 'Guaranteed 40% return investment — send now',
+  amount: '',
+  currency: '',
+  date: '',
+  beneficiary: '',
+  country: '',
+  paymentChannel: '',
+  description: '',
 }
 
 type PaymentFormErrors = Partial<
@@ -71,12 +73,20 @@ function validatePaymentForm(form: PaymentFormState): PaymentFormErrors {
     errors.date = 'Select the payment date.'
   }
 
+  if (!form.currency) {
+    errors.currency = 'Select a currency.'
+  }
+
   if (form.beneficiary.trim().length < 2) {
     errors.beneficiary = 'Enter the beneficiary name.'
   }
 
   if (form.country.trim().length < 2) {
     errors.country = 'Enter the destination country.'
+  }
+
+  if (!form.paymentChannel) {
+    errors.paymentChannel = 'Select a payment method.'
   }
 
   return errors
@@ -116,6 +126,30 @@ const actionConfig: Record<
     borderColor: '#A6E5BE',
     color: '#16794B',
   },
+}
+
+function getStatusTone(status: TransactionStatus) {
+  if (status === 'Approved') {
+    return {
+      backgroundColor: '#ECFDF3',
+      borderColor: '#A6E5BE',
+      color: '#16794B',
+    }
+  }
+
+  if (status === 'Blocked') {
+    return {
+      backgroundColor: '#FFF1F1',
+      borderColor: '#F2B8B8',
+      color: '#B42318',
+    }
+  }
+
+  return {
+    backgroundColor: '#FFF8E8',
+    borderColor: '#F3D28B',
+    color: '#9A5B00',
+  }
 }
 
 function getScoreColor(level: RiskLevel) {
@@ -258,15 +292,17 @@ export function AnalyzePaymentPage() {
 
     const analysis = await analyzePayment(payment)
 
-    const transaction = createTransactionFromAnalysis(
-      payment,
-      analysis,
-    )
+    const transaction = {
+      ...createTransactionFromAnalysis(payment, analysis),
+      // A risk analysis never releases a payment automatically.
+      // It must first be reviewed by the analyst.
+      status: 'In review' as TransactionStatus,
+    }
 
     const savedTransaction = await saveTransaction(transaction)
 
     setTransactionId(savedTransaction.id)
-    setResult(analysis)
+    setResult({ ...analysis, status: 'In review' })
 
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
@@ -296,14 +332,21 @@ export function AnalyzePaymentPage() {
       REVIEW: 'In review',
       BLOCK: 'Blocked',
     }
+    const nextStatus = statusByAction[action]
     const updatedTransaction = await updateTransactionStatus(
       transactionId,
-      statusByAction[action],
+      nextStatus,
     )
+
+    if (updatedTransaction) {
+      setResult((current) =>
+        current ? { ...current, status: nextStatus } : current,
+      )
+    }
 
     setDecisionFeedback(
       updatedTransaction
-        ? `Transaction status saved: ${statusByAction[action]}.`
+        ? `Transaction status saved: ${nextStatus}.`
         : 'The transaction status could not be updated.',
     )
   }
@@ -325,6 +368,9 @@ export function AnalyzePaymentPage() {
         ...result.descriptionSignals,
       ]
     : []
+
+  const transactionStatus = result?.status ?? 'In review'
+  const statusTone = getStatusTone(transactionStatus)
 
   return (
     <Stack spacing={3}>
@@ -393,7 +439,12 @@ export function AnalyzePaymentPage() {
                 label="Currency"
                 value={form.currency}
                 onChange={(event) => updateForm('currency', event.target.value)}
+                error={Boolean(formErrors.currency)}
+                helperText={formErrors.currency}
               >
+                <MenuItem value="" disabled>
+                  Select currency
+                </MenuItem>
                 <MenuItem value="USD">USD</MenuItem>
                 <MenuItem value="EUR">EUR</MenuItem>
                 <MenuItem value="RON">RON</MenuItem>
@@ -440,7 +491,12 @@ export function AnalyzePaymentPage() {
                 onChange={(event) =>
                   updateForm('paymentChannel', event.target.value)
                 }
+                error={Boolean(formErrors.paymentChannel)}
+                helperText={formErrors.paymentChannel}
               >
+                <MenuItem value="" disabled>
+                  Select payment method
+                </MenuItem>
                 <MenuItem value="Bank Transfer (SWIFT)">
                   Bank Transfer (SWIFT)
                 </MenuItem>
@@ -673,45 +729,78 @@ export function AnalyzePaymentPage() {
                   {actionConfig[result.recommendedAction].description}
                 </Typography>
 
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 1.5,
+                    display: 'flex',
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    justifyContent: 'space-between',
+                    gap: 1.5,
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  }}
+                >
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      Transaction status
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {transactionStatus === 'In review'
+                        ? 'Waiting for an analyst decision.'
+                        : 'The analyst decision has been recorded.'}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    size="small"
+                    label={transactionStatus}
+                    sx={{
+                      color: statusTone.color,
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid',
+                      borderColor: statusTone.borderColor,
+                    }}
+                  />
+                </Box>
+
                 <Stack
                   direction={{ xs: 'column', sm: 'row' }}
                   spacing={1}
                   sx={{ mt: 2 }}
                 >
-                  {result.recommendedAction === 'BLOCK' && (
-                    <Button
-                      variant="contained"
-                      color="error"
-                      onClick={() => void handleDecision('BLOCK')}
-                      sx={{ flex: 1 }}
+                  {transactionStatus === 'In review' ? (
+                    <>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        startIcon={<BlockRoundedIcon />}
+                        onClick={() => void handleDecision('BLOCK')}
+                        sx={{ flex: 1 }}
+                      >
+                        Block transaction
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        startIcon={<CheckCircleRoundedIcon />}
+                        onClick={() => void handleDecision('ALLOW')}
+                        sx={{ flex: 1 }}
+                      >
+                        Approve transaction
+                      </Button>
+                    </>
+                  ) : (
+                    <Alert
+                      severity={transactionStatus === 'Blocked' ? 'error' : 'success'}
+                      variant="outlined"
+                      sx={{ width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.65)' }}
                     >
-                      Block transaction
-                    </Button>
+                      {transactionStatus === 'Blocked'
+                        ? 'This payment was blocked and should not be released.'
+                        : 'This payment was approved and can continue through authorization.'}
+                    </Alert>
                   )}
-
-                  {result.recommendedAction === 'ALLOW' && (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      onClick={() => void handleDecision('ALLOW')}
-                      sx={{ flex: 1 }}
-                    >
-                      Allow transaction
-                    </Button>
-                  )}
-
-                  <Button
-                    variant="outlined"
-                    onClick={() => void handleDecision('REVIEW')}
-                    sx={{
-                      flex: 1,
-                      color: actionConfig[result.recommendedAction].color,
-                      borderColor:
-                        actionConfig[result.recommendedAction].borderColor,
-                    }}
-                  >
-                    Flag for review
-                  </Button>
                 </Stack>
               </Box>
 

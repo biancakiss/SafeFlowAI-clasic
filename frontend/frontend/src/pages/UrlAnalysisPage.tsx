@@ -26,11 +26,10 @@ import type { UrlAnalysisResult } from '../types'
 
 const analysisPanelSx = {
   overflow: 'hidden',
-  color: '#FFFFFF',
-  border: '1px solid rgba(78, 228, 213, 0.24)',
-  background:
-    'radial-gradient(circle at 85% 10%, rgba(87, 225, 208, 0.26), transparent 32%), linear-gradient(135deg, #092638 0%, #0D5260 62%, #10988E 135%)',
-  boxShadow: '0 18px 42px rgba(8, 42, 58, 0.18)',
+  color: '#0B1F3A',
+  border: '1px solid #E2E8F0',
+  backgroundColor: '#FFFFFF',
+  boxShadow: '0 12px 30px rgba(15, 35, 65, 0.08)',
 }
 
 const urlFieldSx = {
@@ -139,16 +138,16 @@ function UrlResultCard({
                 display: 'grid',
                 placeItems: 'center',
                 borderRadius: '50%',
-                color: '#74F1E1',
-                backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                border: '1px solid rgba(255, 255, 255, 0.16)',
+                color: '#0B817A',
+                backgroundColor: '#E8F8F5',
+                border: '1px solid #B7E7DF',
               }}
             >
               <SecurityRoundedIcon sx={{ fontSize: 36 }} />
             </Box>
 
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 750 }}>
+              <Typography variant="h5" sx={{ fontWeight: 750, color: '#0B1F3A' }}>
                 Ready to analyze
               </Typography>
 
@@ -156,7 +155,7 @@ function UrlResultCard({
                 sx={{
                   mt: 1,
                   maxWidth: 350,
-                  color: 'rgba(255, 255, 255, 0.76)',
+                  color: '#5D6B82',
                 }}
               >
                 Submit a URL to receive a risk score and an explainable decision.
@@ -191,7 +190,7 @@ function UrlResultCard({
                 variant="body2"
                 sx={{
                   mt: 0.5,
-                  color: 'rgba(255, 255, 255, 0.76)',
+                  color: '#5D6B82',
                   wordBreak: 'break-word',
                 }}
               >
@@ -214,7 +213,7 @@ function UrlResultCard({
             />
           </Box>
 
-          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.22)' }} />
+          <Divider sx={{ borderColor: '#E2E8F0' }} />
 
           <Box>
             <Box
@@ -227,18 +226,18 @@ function UrlResultCard({
             >
               <Typography
                 variant="body2"
-                sx={{ color: 'rgba(255, 255, 255, 0.76)' }}
+                sx={{ color: '#5D6B82' }}
               >
                 Risk score
               </Typography>
 
-              <Typography variant="h4" sx={{ fontWeight: 800 }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B1F3A' }}>
                 {result.riskScore}
                 <Typography
                   component="span"
                   sx={{
                     ml: 0.5,
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    color: '#5D6B82',
                     fontSize: 16,
                   }}
                 >
@@ -260,7 +259,7 @@ function UrlResultCard({
               sx={{
                 height: 9,
                 borderRadius: 10,
-                backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                backgroundColor: '#EEF1F5',
               }}
             />
 
@@ -280,22 +279,22 @@ function UrlResultCard({
             icon={false}
             sx={{
               borderRadius: 2.5,
-              backgroundColor: 'rgba(255, 255, 255, 0.12)',
-              border: '1px solid rgba(255, 255, 255, 0.16)',
-              color: '#FFFFFF',
+              backgroundColor: '#F7FAFC',
+              border: '1px solid #E2E8F0',
+              color: '#0B1F3A',
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#0B1F3A' }}>
               Recommended action
             </Typography>
 
-            <Typography variant="body2" sx={{ mt: 0.5 }}>
+            <Typography variant="body2" sx={{ mt: 0.5, color: '#5D6B82' }}>
               {formatClassification(result.recommendedAction)}
             </Typography>
           </Alert>
 
           <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 750 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 750, color: '#0B1F3A' }}>
               Why this result?
             </Typography>
 
@@ -303,7 +302,7 @@ function UrlResultCard({
               variant="body2"
               sx={{
                 mt: 0.75,
-                color: 'rgba(255, 255, 255, 0.78)',
+                color: '#5D6B82',
               }}
             >
               {result.explanation}
@@ -311,14 +310,14 @@ function UrlResultCard({
           </Box>
 
           <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 750, mb: 1.25 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 750, mb: 1.25, color: '#0B1F3A' }}>
               Detected signals
             </Typography>
 
             {result.triggeredRules.length === 0 ? (
               <Typography
                 variant="body2"
-                sx={{ color: 'rgba(255, 255, 255, 0.72)' }}
+                sx={{ color: '#5D6B82' }}
               >
                 No significant risk signals were detected.
               </Typography>
@@ -330,17 +329,17 @@ function UrlResultCard({
                     sx={{
                       p: 1.25,
                       borderRadius: 2,
-                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      backgroundColor: '#F7FAFC',
+                      border: '1px solid #E2E8F0',
                     }}
                   >
-                    <Typography variant="body2" sx={{ fontWeight: 650 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 650, color: '#0B1F3A' }}>
                       {rule.reason}
                     </Typography>
 
                     <Typography
                       variant="caption"
-                      sx={{ color: 'rgba(255, 255, 255, 0.68)' }}
+                      sx={{ color: '#5D6B82' }}
                     >
                       Risk contribution: +{rule.points} points
                     </Typography>
@@ -434,7 +433,7 @@ export function UrlAnalysisPage() {
               onSubmit={handleSubmit}
             >
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 750 }}>
+                <Typography variant="h5" sx={{ fontWeight: 750, color: '#0B1F3A' }}>
                   URL details
                 </Typography>
 
@@ -442,7 +441,7 @@ export function UrlAnalysisPage() {
                   variant="body2"
                   sx={{
                     mt: 0.5,
-                    color: 'rgba(255, 255, 255, 0.76)',
+                    color: '#5D6B82',
                   }}
                 >
                   Paste the URL without opening it. SafeFlow will analyze its structure and risk signals.
@@ -478,8 +477,12 @@ export function UrlAnalysisPage() {
                   onClick={handleClear}
                   disabled={loading}
                   sx={{
-                    color: '#FFFFFF',
-                    borderColor: 'rgba(255, 255, 255, 0.62)',
+                    color: '#0B817A',
+                    borderColor: '#8AD6CD',
+                    '&:hover': {
+                      borderColor: '#0B817A',
+                      backgroundColor: '#E8F8F5',
+                    },
                   }}
                 >
                   Clear
@@ -497,10 +500,14 @@ export function UrlAnalysisPage() {
                     )
                   }
                   sx={{
-                    color: '#075B5A',
-                    backgroundColor: '#FFFFFF',
+                    color: '#FFFFFF',
+                    backgroundColor: '#0B978C',
                     '&:hover': {
-                      backgroundColor: '#E8FFFB',
+                      backgroundColor: '#087A72',
+                    },
+                    '&.Mui-disabled': {
+                      color: '#94A3B8',
+                      backgroundColor: '#E2E8F0',
                     },
                   }}
                 >

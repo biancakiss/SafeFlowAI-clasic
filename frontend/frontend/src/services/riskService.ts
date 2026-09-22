@@ -110,6 +110,7 @@ export async function analyzePaymentMock(
   return {
     riskScore: finalScore,
     riskLevel,
+    status: 'In review',
     triggeredRules,
     descriptionSignals,
     recommendedAction,
@@ -127,9 +128,14 @@ async function analyzePaymentApi(
 export async function analyzePayment(
   payment: PaymentAnalysisInput,
 ): Promise<RiskAnalysisResult> {
-  if (environment.useMock) {
-    return analyzePaymentMock(payment)
-  }
+  const analysis = environment.useMock
+    ? await analyzePaymentMock(payment)
+    : await analyzePaymentApi(payment)
 
-  return analyzePaymentApi(payment)
+  // every new analysis enters the analyst review workflow first
+  // the final decision is made separately with Approve or Block
+  return {
+    ...analysis,
+    status: 'In review',
+  }
 }

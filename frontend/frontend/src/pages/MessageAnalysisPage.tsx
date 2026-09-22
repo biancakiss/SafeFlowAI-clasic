@@ -42,11 +42,10 @@ const emptyForm: MessageAnalysisInput = {
 
 const analysisPanelSx = {
   overflow: 'hidden',
-  color: '#FFFFFF',
-  border: '1px solid rgba(78, 228, 213, 0.24)',
-  background:
-    'radial-gradient(circle at 85% 10%, rgba(87, 225, 208, 0.26), transparent 32%), linear-gradient(135deg, #092638 0%, #0D5260 62%, #10988E 135%)',
-  boxShadow: '0 18px 42px rgba(8, 42, 58, 0.18)',
+  color: '#0B1F3A',
+  border: '1px solid #E2E8F0',
+  backgroundColor: '#FFFFFF',
+  boxShadow: '0 12px 30px rgba(15, 35, 65, 0.08)',
 }
 
 const messageFieldSx = {
@@ -245,8 +244,6 @@ function AnalysisResultCard({
       sx={{
         ...analysisPanelSx,
         height: '100%',
-        background:
-          'radial-gradient(circle at 18% 20%, rgba(87, 225, 208, 0.2), transparent 30%), linear-gradient(145deg, #0B2D42 0%, #123E4A 58%, #167B78 150%)',
       }}
     >
         <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
@@ -265,16 +262,16 @@ function AnalysisResultCard({
                 display: 'grid',
                 placeItems: 'center',
                 borderRadius: '50%',
-                color: '#74F1E1',
-                backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                border: '1px solid rgba(255, 255, 255, 0.16)',
+                color: '#0B817A',
+                backgroundColor: '#E8F8F5',
+                border: '1px solid #B7E7DF',
               }}
             >
               <SecurityRoundedIcon sx={{ fontSize: 34 }} />
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h5" sx={{ fontWeight: 750, color: '#FFFFFF' }}>
+              <Typography variant="h5" sx={{ fontWeight: 750, color: '#0B1F3A' }}>
                 Ready to analyze
               </Typography>
 
@@ -282,7 +279,7 @@ function AnalysisResultCard({
                 sx={{
                   mt: 1,
                   maxWidth: 330,
-                  color: 'rgba(255, 255, 255, 0.76)',
+                  color: '#5D6B82',
                 }}
               >
                 Submit an email or SMS to receive a risk score and an explainable decision.
@@ -295,6 +292,12 @@ function AnalysisResultCard({
   }
 
   const classificationStyle = getClassificationColor(result.classification)
+  const recommendedActionBackground =
+    result.riskLevel === 'HIGH'
+      ? '#FEE4E2'
+      : result.riskLevel === 'MEDIUM'
+        ? '#FFF4D6'
+        : '#EAF8F0'
 
   return (
     <Card
@@ -314,11 +317,11 @@ function AnalysisResultCard({
             }}
           >
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 750 , color: '#FFFFFF' }}>
+              <Typography variant="h5" sx={{ fontWeight: 750, color: '#0B1F3A' }}>
                 Analysis result
               </Typography>
 
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, color: 'rgba(255, 255, 255, 0.75)' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, color: '#5D6B82' }}>
                 {result.messageType === 'email' ? 'Email message' : 'SMS message'}
               </Typography>
             </Box>
@@ -337,7 +340,7 @@ function AnalysisResultCard({
             />
           </Box>
 
-          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.22)' }} />
+          <Divider sx={{ borderColor: '#E2E8F0' }} />
 
           <Box>
             <Box
@@ -348,13 +351,13 @@ function AnalysisResultCard({
                 mb: 1,
               }}
             >
-              <Typography variant="body2" color="text.secondary" sx={{ color: 'rgba(255, 255, 255, 0.75)' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ color: '#5D6B82' }}>
                 Risk score
               </Typography>
 
-              <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B1F3A' }}>
                 {result.riskScore}
-                <Typography component="span" color="text.secondary" sx={{ fontSize: 16 }}>
+                <Typography component="span" color="text.secondary" sx={{ fontSize: 16, color: '#5D6B82' }}>
                   /100
                 </Typography>
               </Typography>
@@ -373,7 +376,7 @@ function AnalysisResultCard({
               sx={{
                 height: 9,
                 borderRadius: 10,
-                backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                backgroundColor: '#EEF1F5',
               }}
             />
 
@@ -393,35 +396,35 @@ function AnalysisResultCard({
             icon={false}
            sx={{
             borderRadius: 2.5,
-            backgroundColor: 'rgba(255, 255, 255, 0.12)',
-            border: '1px solid rgba(255, 255, 255, 0.16)',
-            color: '#FFFFFF',
+            backgroundColor: recommendedActionBackground,
+            border: '1px solid #E2E8F0',
+            color: '#0B1F3A',
             '& .MuiAlert-icon': {
-              color: '#74F1E1',
+              color: '#0B817A',
             },
           }}
           >
-            <Typography variant="body2" sx={{ fontWeight: 650, color: '#FFFFFF' }}>
+            <Typography variant="body2" sx={{ fontWeight: 650, color: '#0B1F3A' }}>
               Recommended action
             </Typography>
 
-            <Typography variant="body2" sx={{ mt: 0.5, color: 'rgba(255, 255, 255, 0.82)' }}>
+            <Typography variant="body2" sx={{ mt: 0.5, color: '#5D6B82' }}>
               {formatClassification(result.recommendedAction)}
             </Typography>
           </Alert>
 
           <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 750, color: '#FFFFFF' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 750, color: '#0B1F3A' }}>
               Why this result?
             </Typography>
 
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, color: 'rgba(255, 255, 255, 0.78)' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, color: '#5D6B82' }}>
               {result.explanation}
             </Typography>
           </Box>
 
           <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 750, mb: 1.25, color: '#FFFFFF' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 750, mb: 1.25, color: '#0B1F3A' }}>
               Detected signals
             </Typography>
 
@@ -436,13 +439,13 @@ function AnalysisResultCard({
                     sx={{
                       p: 1.25,
                       borderRadius: 2,
-                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      backgroundColor: '#F7FAFC',
+                      border: '1px solid #E2E8F0',
                     }}
                   >
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 650, color: '#FFFFFF' }}
+                      sx={{ fontWeight: 650, color: '#0B1F3A' }}
                     >
                       {rule.reason}
                     </Typography>
@@ -450,7 +453,7 @@ function AnalysisResultCard({
                     {rule.points > 0 && (
                       <Typography
                         variant="caption"
-                        sx={{ color: 'rgba(255, 255, 255, 0.68)' }}
+                        sx={{ color: '#5D6B82' }}
                       >
                         Risk contribution: +{rule.points} points
                       </Typography>
@@ -568,13 +571,13 @@ export function MessageAnalysisPage() {
           <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
             <Stack spacing={2.5} component="form" onSubmit={handleSubmit}>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 750, color: '#FFFFFF' }}>
+                <Typography variant="h5" sx={{ fontWeight: 750, color: '#0B1F3A' }}>
                   Message details
                 </Typography>
 
                 <Typography
                   variant="body2"
-                  sx={{ mt: 0.5, color: 'rgba(255, 255, 255, 0.76)' }}
+                  sx={{ mt: 0.5, color: '#5D6B82' }}
                 >
                   Enter the message context and content to receive an explainable risk decision.
                 </Typography>
@@ -585,14 +588,14 @@ export function MessageAnalysisPage() {
                 onChange={handleMessageTypeChange}
                 variant="fullWidth"
                 sx={{
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.22)',
+                  borderBottom: '1px solid #E2E8F0',
                   '& .MuiTab-root': {
                     minHeight: 44,
-                    color: 'rgba(255, 255, 255, 0.68)',
+                    color: '#6B778B',
                     fontWeight: 700,
                   },
                   '& .Mui-selected': {
-                    color: '#FFFFFF !important',
+                    color: '#0B817A !important',
                   },
                   '& .MuiTabs-indicator': {
                     backgroundColor: '#62E6D7',
@@ -696,11 +699,11 @@ export function MessageAnalysisPage() {
                   onClick={handleClear}
                   disabled={loading}
                   sx={{
-                    color: '#FFFFFF',
-                    borderColor: 'rgba(255, 255, 255, 0.62)',
+                    color: '#0B817A',
+                    borderColor: '#8AD6CD',
                     '&:hover': {
-                      borderColor: '#FFFFFF',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderColor: '#0B817A',
+                      backgroundColor: '#E8F8F5',
                     },
                   }}
                 >
@@ -715,16 +718,16 @@ export function MessageAnalysisPage() {
                   }
                   disabled={loading || !form.body.trim()}
                   sx={{
-                    color: '#075B5A',
-                    backgroundColor: '#FFFFFF',
+                    color: '#FFFFFF',
+                    backgroundColor: '#0B978C',
                     boxShadow: 'none',
                     '&:hover': {
-                      backgroundColor: '#E8FFFB',
+                      backgroundColor: '#087A72',
                       boxShadow: 'none',
                     },
                     '&.Mui-disabled': {
-                      color: 'rgba(7, 91, 90, 0.45)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.55)',
+                      color: '#94A3B8',
+                      backgroundColor: '#E2E8F0',
                     },
                   }}
                 >
