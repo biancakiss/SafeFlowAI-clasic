@@ -17,6 +17,7 @@ def create_analysis(
     triggered_rules: list,
     model_version: str | None,
     transaction_db_id: int | None = None,
+    url_db_id: int | None = None,
 ) -> Analysis:
     analysis = Analysis(
         user_id=user_id,
@@ -30,6 +31,7 @@ def create_analysis(
         triggered_rules=triggered_rules,
         model_version=model_version,
         transaction_db_id=transaction_db_id,
+        url_db_id=url_db_id,
     )
 
     db.add(analysis)

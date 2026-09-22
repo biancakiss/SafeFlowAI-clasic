@@ -1,6 +1,7 @@
-from typing import Literal
+from typing import Literal, Any
+from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class MessageRequest(BaseModel):
@@ -38,3 +39,26 @@ class MessageRequest(BaseModel):
             )
 
         return value
+
+class MessageResponse(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+    id: int
+    user_id: int
+    message_type: Literal["email", "sms"]
+    sender: str
+    receiver: str
+    subject: str | None
+    body: str
+    created_at: datetime
+
+    analysis_id: int | None = None
+    predicted_class: str | None = None
+    model_score: float | None = None
+    risk_score: int | None = None
+    risk_level: str | None = None
+    triggered_rules: list[dict[str, Any]] = Field(
+        default_factory=list
+    )

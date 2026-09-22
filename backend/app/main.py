@@ -14,6 +14,7 @@ from app.api.analyses import router as analyses_router
 from app.api.transaction import (router as transactions_router,)
 from app.api.dashboard import router as dashboard_router
 from app.api.notification import router as notifications_router
+from app.api.urls import router as urls_router
 
 #creaza tabelele predefinite in modelele sql alchemy
 @asynccontextmanager
@@ -37,3 +38,4 @@ app.include_router(analyses_router)
 app.include_router(transactions_router)
 app.include_router(dashboard_router)
 app.include_router(notifications_router)
+app.include_router(urls_router)
