@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
@@ -10,8 +10,17 @@ from app.schemas.auth import (
     TokenResponse,
     UserResponse,
     UserUpdateRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    VerifyResetCodeRequest,
 )
-from app.services.auth_service import login_user, register_user
+from app.services.auth_service import (
+    login_user,
+    register_user,
+    request_password_reset,
+    reset_password,
+    verify_reset_code,
+)
 
 
 router = APIRouter(
@@ -79,3 +88,57 @@ def update_current_user(
     db.refresh(current_user)
 
     return current_user
+
+@router.post("/forgot-password")
+def forgot_password(
+    data: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    request_password_reset(
+        db,
+        email=str(data.email),
+    )
+
+    return {
+        "message": (
+            "If the email exists, a reset code "
+            "has been sent."
+        )
+    }
+
+@router.post("/verify-reset-code")
+def verify_reset_code_endpoint(
+    data: VerifyResetCodeRequest,
+    db: Session = Depends(get_db),
+):
+    is_valid = verify_reset_code(
+        db,
+        email=str(data.email),
+        code=data.code,
+    )
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired reset code",
+        )
+
+    return {
+        "message": "Reset code is valid."
+    }
+
+@router.post("/reset-password")
+def reset_password_endpoint(
+    data: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    reset_password(
+        db,
+        email=str(data.email),
+        code=data.code,
+        new_password=data.new_password,
+    )
+
+    return {
+        "message": "Password reset successfully."
+    }
