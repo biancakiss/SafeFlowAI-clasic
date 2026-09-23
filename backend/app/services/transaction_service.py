@@ -16,6 +16,9 @@ from app.repositories.transaction_repository import (
 from app.risk_engine.scoring import calculate_risk
 from app.schemas.analysis import AnalysisResponse
 from app.schemas.transaction import TransactionRequest
+from app.services.notification_observer import (
+    TransactionStatusNotificationObserver,
+)
 from app.services.transaction_model_service import (
     predict_transaction,
 )
@@ -359,9 +362,11 @@ def analyze_transaction(
         ],
     )
 
-    db.commit()
-    db.refresh(transaction)
-    db.refresh(analysis)
+    TransactionStatusNotificationObserver(db).on_transaction_analyzed(
+        transaction=transaction,
+        risk_level=analysis.risk_level,
+        risk_score=analysis.risk_score,
+    )
 
     return AnalysisResponse(
         analysis_id=analysis.id,

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   AppBar,
   Avatar,
-  Badge,
   Box,
   Divider,
   Drawer,
@@ -21,13 +20,13 @@ import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
-import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { BrandMark } from '../common/BrandMark'
 import { useAuth } from '../../context/AuthContext'
 import MarkEmailUnreadRoundedIcon from '@mui/icons-material/MarkEmailUnreadRounded'
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
+import { NotificationCenter } from '../notifications/NotificationCenter'
 
 const drawerWidth = 252
 
@@ -164,6 +163,7 @@ export function AppShell() {
   const theme = useTheme()
   const desktop = useMediaQuery(theme.breakpoints.up('lg'))
   const [mobileOpen, setMobileOpen] = useState(false)
+  const navigate = useNavigate()
   const { user } = useAuth()
   const initials = [user?.first_name?.[0], user?.last_name?.[0]]
     .filter(Boolean)
@@ -217,16 +217,18 @@ export function AppShell() {
                 SafeFlow Operations
               </Typography>
             </Box>
-            <Tooltip title="Notifications">
-              <IconButton aria-label="Notifications">
-                <Badge color="error" variant="dot">
-                  <NotificationsNoneRoundedIcon />
-                </Badge>
+            <NotificationCenter />
+            <Tooltip title="Profile">
+              <IconButton
+                aria-label="Open profile"
+                onClick={() => navigate('/profile')}
+                sx={{ ml: 0.5, p: 0.25 }}
+              >
+                <Avatar sx={{ width: 36, height: 36, bgcolor: '#123E4A', fontSize: 13 }}>
+                  {initials}
+                </Avatar>
               </IconButton>
             </Tooltip>
-            <Avatar sx={{ ml: 1.25, width: 36, height: 36, bgcolor: '#123E4A', fontSize: 13 }}>
-              {initials}
-            </Avatar>
           </Toolbar>
         </AppBar>
 

@@ -20,6 +20,12 @@ class TransactionModelService:
             artifact_path / "fraud_payment_pipeline.joblib"
         )
 
+        # Avoid spawning worker processes during inference on Windows.
+        # The serialized RandomForest is trained with n_jobs=-1, which can
+        # raise WinError 5 when the API is running under Uvicorn reload.
+        if hasattr(self.pipeline, "set_params"):
+            self.pipeline.set_params(classifier__n_jobs=1)
+
         self.metadata = json.loads(
             (artifact_path / "fraud_payment_metadata.json").read_text(
                 encoding="utf-8"

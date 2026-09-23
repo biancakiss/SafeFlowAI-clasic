@@ -153,19 +153,32 @@ function mapStatus(value: BackendTransactionStatus): TransactionStatus {
 function toBackendPaymentChannel(value: string): string {
   const normalized = value.trim().toLowerCase()
 
-  if (normalized.includes('crypto')) return 'crypto_wallet'
-  if (normalized.includes('wire') || normalized.includes('swift')) {
+  if (normalized === 'crypto' || normalized === 'crypto_wallet' || normalized.includes('crypto')) {
+    return 'crypto'
+  }
+  if (
+    normalized === 'international_transfer' ||
+    normalized.includes('wire') ||
+    normalized.includes('swift')
+  ) {
     return 'international_transfer'
   }
-  if (normalized.includes('cash')) return 'cash_transfer'
+  if (
+    normalized === 'cash_withdrawal' ||
+    normalized === 'cash_transfer' ||
+    normalized.includes('cash')
+  ) {
+    return 'cash_withdrawal'
+  }
+  if (normalized === 'bank_transfer') return 'bank_transfer'
+  if (normalized === 'card') return 'card'
 
-  return value
+  return normalized
 }
 
 function toFrontendPaymentChannel(value: string): string {
-  if (value === 'international_transfer') return 'Bank Transfer (SWIFT)'
-  if (value === 'crypto_wallet') return 'Cryptocurrency'
-  if (value === 'cash_transfer') return 'Cash transfer'
+  if (value === 'crypto_wallet') return 'crypto'
+  if (value === 'cash_transfer') return 'cash_withdrawal'
 
   return value
 }

@@ -220,16 +220,7 @@ export function ScamGlobeSection({ routes, locations }: ScamGlobeSectionProps) {
                 </Box>
               </Stack>
             </Box>
-
-            <Chip
-              size="small"
-              label="Demo dataset"
-              sx={{
-                color: '#BDF7EF',
-                border: '1px solid rgba(126,231,218,0.22)',
-                backgroundColor: 'rgba(79,209,181,0.1)',
-              }}
-            />
+  
           </Stack>
 
           <Box sx={{ mt: 0.5, mx: { xs: -2.5, md: -3 }, mb: { xs: -1, md: -2 } }}>

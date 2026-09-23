@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   Divider,
   MenuItem,
@@ -15,6 +16,7 @@ import {
 } from '@mui/material'
 
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
+import BlockRoundedIcon from '@mui/icons-material/BlockRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
@@ -46,14 +48,253 @@ interface PaymentFormState {
 }
 
 const initialForm: PaymentFormState = {
-  amount: '14500',
-  currency: 'USD',
-  date: new Date().toISOString().slice(0, 10),
-  beneficiary: 'Maxwell Okonkwo',
-  country: 'United Kingdom',
-  paymentChannel: 'Bank Transfer (SWIFT)',
-  description: 'Guaranteed 40% return investment — send now',
+  amount: '',
+  currency: '',
+  date: '',
+  beneficiary: '',
+  country: '',
+  paymentChannel: '',
+  description: '',
 }
+
+const paymentChannelOptions = [
+  { value: 'card', label: 'Card' },
+  { value: 'bank_transfer', label: 'Bank transfer' },
+  { value: 'international_transfer', label: 'International transfer' },
+  { value: 'cash_withdrawal', label: 'Cash withdrawal' },
+  { value: 'crypto', label: 'Crypto' },
+]
+
+const currencyOptions = [
+  { code: 'AED', name: 'UAE Dirham' },
+  { code: 'AUD', name: 'Australian Dollar' },
+  { code: 'BGN', name: 'Bulgarian Lev' },
+  { code: 'BRL', name: 'Brazilian Real' },
+  { code: 'CAD', name: 'Canadian Dollar' },
+  { code: 'CHF', name: 'Swiss Franc' },
+  { code: 'CNY', name: 'Chinese Yuan' },
+  { code: 'CZK', name: 'Czech Koruna' },
+  { code: 'DKK', name: 'Danish Krone' },
+  { code: 'EUR', name: 'Euro' },
+  { code: 'GBP', name: 'British Pound' },
+  { code: 'HKD', name: 'Hong Kong Dollar' },
+  { code: 'HUF', name: 'Hungarian Forint' },
+  { code: 'ILS', name: 'Israeli New Shekel' },
+  { code: 'INR', name: 'Indian Rupee' },
+  { code: 'JPY', name: 'Japanese Yen' },
+  { code: 'KRW', name: 'South Korean Won' },
+  { code: 'MXN', name: 'Mexican Peso' },
+  { code: 'NOK', name: 'Norwegian Krone' },
+  { code: 'NZD', name: 'New Zealand Dollar' },
+  { code: 'PLN', name: 'Polish Zloty' },
+  { code: 'RON', name: 'Romanian Leu' },
+  { code: 'SAR', name: 'Saudi Riyal' },
+  { code: 'SEK', name: 'Swedish Krona' },
+  { code: 'SGD', name: 'Singapore Dollar' },
+  { code: 'THB', name: 'Thai Baht' },
+  { code: 'TRY', name: 'Turkish Lira' },
+  { code: 'USD', name: 'US Dollar' },
+  { code: 'ZAR', name: 'South African Rand' },
+]
+
+const countryOptions = [
+  'Afghanistan',
+  'Albania',
+  'Algeria',
+  'Andorra',
+  'Angola',
+  'Antigua and Barbuda',
+  'Argentina',
+  'Armenia',
+  'Australia',
+  'Austria',
+  'Azerbaijan',
+  'Bahamas',
+  'Bahrain',
+  'Bangladesh',
+  'Barbados',
+  'Belarus',
+  'Belgium',
+  'Belize',
+  'Benin',
+  'Bhutan',
+  'Bolivia',
+  'Bosnia and Herzegovina',
+  'Botswana',
+  'Brazil',
+  'Brunei',
+  'Bulgaria',
+  'Burkina Faso',
+  'Burundi',
+  'Cabo Verde',
+  'Cambodia',
+  'Cameroon',
+  'Canada',
+  'Central African Republic',
+  'Chad',
+  'Chile',
+  'China',
+  'Colombia',
+  'Comoros',
+  'Costa Rica',
+  'Croatia',
+  'Cuba',
+  'Cyprus',
+  'Czechia',
+  'Democratic Republic of the Congo',
+  'Denmark',
+  'Djibouti',
+  'Dominica',
+  'Dominican Republic',
+  'Ecuador',
+  'Egypt',
+  'El Salvador',
+  'Equatorial Guinea',
+  'Eritrea',
+  'Estonia',
+  'Eswatini',
+  'Ethiopia',
+  'Fiji',
+  'Finland',
+  'France',
+  'Gabon',
+  'Gambia',
+  'Georgia',
+  'Germany',
+  'Ghana',
+  'Greece',
+  'Grenada',
+  'Guatemala',
+  'Guinea',
+  'Guinea-Bissau',
+  'Guyana',
+  'Haiti',
+  'Honduras',
+  'Hungary',
+  'Iceland',
+  'India',
+  'Indonesia',
+  'Iran',
+  'Iraq',
+  'Ireland',
+  'Israel',
+  'Italy',
+  'Ivory Coast',
+  'Jamaica',
+  'Japan',
+  'Jordan',
+  'Kazakhstan',
+  'Kenya',
+  'Kiribati',
+  'Kuwait',
+  'Kyrgyzstan',
+  'Laos',
+  'Latvia',
+  'Lebanon',
+  'Lesotho',
+  'Liberia',
+  'Libya',
+  'Liechtenstein',
+  'Lithuania',
+  'Luxembourg',
+  'Madagascar',
+  'Malawi',
+  'Malaysia',
+  'Maldives',
+  'Mali',
+  'Malta',
+  'Marshall Islands',
+  'Mauritania',
+  'Mauritius',
+  'Mexico',
+  'Micronesia',
+  'Moldova',
+  'Monaco',
+  'Mongolia',
+  'Montenegro',
+  'Morocco',
+  'Mozambique',
+  'Myanmar',
+  'Namibia',
+  'Nauru',
+  'Nepal',
+  'Netherlands',
+  'New Zealand',
+  'Nicaragua',
+  'Niger',
+  'Nigeria',
+  'North Korea',
+  'North Macedonia',
+  'Norway',
+  'Oman',
+  'Pakistan',
+  'Palau',
+  'Palestine',
+  'Panama',
+  'Papua New Guinea',
+  'Paraguay',
+  'Peru',
+  'Philippines',
+  'Poland',
+  'Portugal',
+  'Qatar',
+  'Republic of the Congo',
+  'Romania',
+  'Russia',
+  'Rwanda',
+  'Saint Kitts and Nevis',
+  'Saint Lucia',
+  'Saint Vincent and the Grenadines',
+  'Samoa',
+  'San Marino',
+  'Sao Tome and Principe',
+  'Saudi Arabia',
+  'Senegal',
+  'Serbia',
+  'Seychelles',
+  'Sierra Leone',
+  'Singapore',
+  'Slovakia',
+  'Slovenia',
+  'Solomon Islands',
+  'Somalia',
+  'South Africa',
+  'South Korea',
+  'South Sudan',
+  'Spain',
+  'Sri Lanka',
+  'Sudan',
+  'Suriname',
+  'Sweden',
+  'Switzerland',
+  'Syria',
+  'Taiwan',
+  'Tajikistan',
+  'Tanzania',
+  'Thailand',
+  'Timor-Leste',
+  'Togo',
+  'Tonga',
+  'Trinidad and Tobago',
+  'Tunisia',
+  'Turkey',
+  'Turkmenistan',
+  'Tuvalu',
+  'Uganda',
+  'Ukraine',
+  'United Arab Emirates',
+  'United Kingdom',
+  'United States',
+  'Uruguay',
+  'Uzbekistan',
+  'Vanuatu',
+  'Vatican City',
+  'Venezuela',
+  'Vietnam',
+  'Yemen',
+  'Zambia',
+  'Zimbabwe',
+]
 
 type PaymentFormErrors = Partial<
   Record<keyof PaymentFormState, string>
@@ -71,12 +312,20 @@ function validatePaymentForm(form: PaymentFormState): PaymentFormErrors {
     errors.date = 'Select the payment date.'
   }
 
+  if (!form.currency) {
+    errors.currency = 'Select a currency.'
+  }
+
   if (form.beneficiary.trim().length < 2) {
     errors.beneficiary = 'Enter the beneficiary name.'
   }
 
   if (form.country.trim().length < 2) {
     errors.country = 'Enter the destination country.'
+  }
+
+  if (!form.paymentChannel) {
+    errors.paymentChannel = 'Select a payment method.'
   }
 
   return errors
@@ -116,6 +365,30 @@ const actionConfig: Record<
     borderColor: '#A6E5BE',
     color: '#16794B',
   },
+}
+
+function getStatusTone(status: TransactionStatus) {
+  if (status === 'Approved') {
+    return {
+      backgroundColor: '#ECFDF3',
+      borderColor: '#A6E5BE',
+      color: '#16794B',
+    }
+  }
+
+  if (status === 'Blocked') {
+    return {
+      backgroundColor: '#FFF1F1',
+      borderColor: '#F2B8B8',
+      color: '#B42318',
+    }
+  }
+
+  return {
+    backgroundColor: '#FFF8E8',
+    borderColor: '#F3D28B',
+    color: '#9A5B00',
+  }
 }
 
 function getScoreColor(level: RiskLevel) {
@@ -258,15 +531,17 @@ export function AnalyzePaymentPage() {
 
     const analysis = await analyzePayment(payment)
 
-    const transaction = createTransactionFromAnalysis(
-      payment,
-      analysis,
-    )
+    const transaction = {
+      ...createTransactionFromAnalysis(payment, analysis),
+      // A risk analysis never releases a payment automatically.
+      // It must first be reviewed by the analyst.
+      status: 'In review' as TransactionStatus,
+    }
 
     const savedTransaction = await saveTransaction(transaction)
 
     setTransactionId(savedTransaction.id)
-    setResult(analysis)
+    setResult({ ...analysis, status: 'In review' })
 
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
@@ -296,14 +571,21 @@ export function AnalyzePaymentPage() {
       REVIEW: 'In review',
       BLOCK: 'Blocked',
     }
+    const nextStatus = statusByAction[action]
     const updatedTransaction = await updateTransactionStatus(
       transactionId,
-      statusByAction[action],
+      nextStatus,
     )
+
+    if (updatedTransaction) {
+      setResult((current) =>
+        current ? { ...current, status: nextStatus } : current,
+      )
+    }
 
     setDecisionFeedback(
       updatedTransaction
-        ? `Transaction status saved: ${statusByAction[action]}.`
+        ? `Transaction status saved: ${nextStatus}.`
         : 'The transaction status could not be updated.',
     )
   }
@@ -325,6 +607,9 @@ export function AnalyzePaymentPage() {
         ...result.descriptionSignals,
       ]
     : []
+
+  const transactionStatus = result?.status ?? 'In review'
+  const statusTone = getStatusTone(transactionStatus)
 
   return (
     <Stack spacing={3}>
@@ -393,10 +678,17 @@ export function AnalyzePaymentPage() {
                 label="Currency"
                 value={form.currency}
                 onChange={(event) => updateForm('currency', event.target.value)}
+                error={Boolean(formErrors.currency)}
+                helperText={formErrors.currency}
               >
-                <MenuItem value="USD">USD</MenuItem>
-                <MenuItem value="EUR">EUR</MenuItem>
-                <MenuItem value="RON">RON</MenuItem>
+                <MenuItem value="" disabled>
+                  Select currency
+                </MenuItem>
+                {currencyOptions.map((currency) => (
+                  <MenuItem key={currency.code} value={currency.code}>
+                    {currency.code} — {currency.name}
+                  </MenuItem>
+                ))}
               </TextField>
 
               <TextField
@@ -425,12 +717,22 @@ export function AnalyzePaymentPage() {
 
               <TextField
                 required
+                select
                 label="Destination country"
                 value={form.country}
                 onChange={(event) => updateForm('country', event.target.value)}
                 error={Boolean(formErrors.country)}
                 helperText={formErrors.country}
-              />
+              >
+                <MenuItem value="" disabled>
+                  Select destination country
+                </MenuItem>
+                {countryOptions.map((country) => (
+                  <MenuItem key={country} value={country}>
+                    {country}
+                  </MenuItem>
+                ))}
+              </TextField>
 
               <TextField
                 required
@@ -440,14 +742,17 @@ export function AnalyzePaymentPage() {
                 onChange={(event) =>
                   updateForm('paymentChannel', event.target.value)
                 }
+                error={Boolean(formErrors.paymentChannel)}
+                helperText={formErrors.paymentChannel}
               >
-                <MenuItem value="Bank Transfer (SWIFT)">
-                  Bank Transfer (SWIFT)
+                <MenuItem value="" disabled>
+                  Select payment method
                 </MenuItem>
-                <MenuItem value="Online banking">Online banking</MenuItem>
-                <MenuItem value="Mobile banking">Mobile banking</MenuItem>
-                <MenuItem value="Wire transfer">Wire transfer</MenuItem>
-                <MenuItem value="Cryptocurrency">Cryptocurrency</MenuItem>
+                {paymentChannelOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </TextField>
 
               <TextField
@@ -673,45 +978,78 @@ export function AnalyzePaymentPage() {
                   {actionConfig[result.recommendedAction].description}
                 </Typography>
 
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 1.5,
+                    display: 'flex',
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    justifyContent: 'space-between',
+                    gap: 1.5,
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  }}
+                >
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      Transaction status
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {transactionStatus === 'In review'
+                        ? 'Waiting for an analyst decision.'
+                        : 'The analyst decision has been recorded.'}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    size="small"
+                    label={transactionStatus}
+                    sx={{
+                      color: statusTone.color,
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid',
+                      borderColor: statusTone.borderColor,
+                    }}
+                  />
+                </Box>
+
                 <Stack
                   direction={{ xs: 'column', sm: 'row' }}
                   spacing={1}
                   sx={{ mt: 2 }}
                 >
-                  {result.recommendedAction === 'BLOCK' && (
-                    <Button
-                      variant="contained"
-                      color="error"
-                      onClick={() => void handleDecision('BLOCK')}
-                      sx={{ flex: 1 }}
+                  {transactionStatus === 'In review' ? (
+                    <>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        startIcon={<BlockRoundedIcon />}
+                        onClick={() => void handleDecision('BLOCK')}
+                        sx={{ flex: 1 }}
+                      >
+                        Block transaction
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        startIcon={<CheckCircleRoundedIcon />}
+                        onClick={() => void handleDecision('ALLOW')}
+                        sx={{ flex: 1 }}
+                      >
+                        Approve transaction
+                      </Button>
+                    </>
+                  ) : (
+                    <Alert
+                      severity={transactionStatus === 'Blocked' ? 'error' : 'success'}
+                      variant="outlined"
+                      sx={{ width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.65)' }}
                     >
-                      Block transaction
-                    </Button>
+                      {transactionStatus === 'Blocked'
+                        ? 'This payment was blocked and should not be released.'
+                        : 'This payment was approved and can continue through authorization.'}
+                    </Alert>
                   )}
-
-                  {result.recommendedAction === 'ALLOW' && (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      onClick={() => void handleDecision('ALLOW')}
-                      sx={{ flex: 1 }}
-                    >
-                      Allow transaction
-                    </Button>
-                  )}
-
-                  <Button
-                    variant="outlined"
-                    onClick={() => void handleDecision('REVIEW')}
-                    sx={{
-                      flex: 1,
-                      color: actionConfig[result.recommendedAction].color,
-                      borderColor:
-                        actionConfig[result.recommendedAction].borderColor,
-                    }}
-                  >
-                    Flag for review
-                  </Button>
                 </Stack>
               </Box>
 

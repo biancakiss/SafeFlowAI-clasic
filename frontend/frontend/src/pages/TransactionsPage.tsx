@@ -177,7 +177,7 @@ export function TransactionsPage() {
                     <TableCell>Beneficiary</TableCell>
                     <TableCell>Payment channel</TableCell>
                     <TableCell>Amount</TableCell>
-                    <TableCell>Risk decision</TableCell>
+                    <TableCell>Risk level</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell align="right">
                       Details
@@ -241,24 +241,9 @@ export function TransactionsPage() {
                         </TableCell>
 
                         <TableCell>
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            sx={{
-                              alignItems: 'center',
-                            }}
-                          >
-                            <RiskLevelChip
-                              level={transaction.riskLevel}
-                            />
-
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {transaction.riskScore}/100
-                            </Typography>
-                          </Stack>
+                          <RiskLevelChip
+                            level={transaction.riskLevel}
+                          />
                         </TableCell>
 
                         <TableCell>
@@ -270,7 +255,9 @@ export function TransactionsPage() {
                               transaction.status ===
                               'Blocked'
                                 ? 'error'
-                                : 'default'
+                                : transaction.status === 'Approved'
+                                  ? 'success'
+                                  : 'warning'
                             }
                           />
                         </TableCell>

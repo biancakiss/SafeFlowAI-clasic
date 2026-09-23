@@ -20,9 +20,87 @@ import {
 import { Link as RouterLink, useParams } from 'react-router'
 
 import { useTransactions } from '../context/TransactionContext'
-import type { TransactionStatus } from '../types'
+import type { RiskLevel, TransactionStatus } from '../types'
 import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
+
+function getScoreColor(level: RiskLevel) {
+  if (level === 'HIGH') {
+    return '#D14343'
+  }
+
+  if (level === 'MEDIUM') {
+    return '#C76A12'
+  }
+
+  return '#14804A'
+}
+
+interface RiskScoreRingProps {
+  score: number
+  level: RiskLevel
+}
+
+function RiskScoreRing({ score, level }: RiskScoreRingProps) {
+  const scoreColor = getScoreColor(level)
+  const safeScore = Math.min(Math.max(score, 0), 100)
+
+  return (
+    <Box
+      aria-label={`Risk score ${score} out of 100`}
+      sx={{
+        position: 'relative',
+        width: 138,
+        height: 138,
+        display: 'grid',
+        placeItems: 'center',
+        mx: 'auto',
+      }}
+    >
+      <CircularProgress
+        variant="determinate"
+        value={100}
+        size={138}
+        thickness={4}
+        sx={{
+          position: 'absolute',
+          color: '#EEF1F5',
+        }}
+      />
+
+      <CircularProgress
+        variant="determinate"
+        value={safeScore}
+        size={138}
+        thickness={4}
+        sx={{
+          position: 'absolute',
+          color: scoreColor,
+          transform: 'rotate(-90deg)',
+          '& .MuiCircularProgress-circle': {
+            strokeLinecap: 'round',
+          },
+        }}
+      />
+
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography
+          sx={{
+            color: scoreColor,
+            fontSize: 32,
+            lineHeight: 1,
+            fontWeight: 750,
+          }}
+        >
+          {score}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          / 100
+        </Typography>
+      </Box>
+    </Box>
+  )
+}
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -141,7 +219,7 @@ export function AnalysisDetailsPage() {
 
   const detectedFactors = [
     ...(transaction.triggeredRules ?? []).map(
-      (rule) => `${rule.reason} (+${rule.points})`,
+      (rule) => rule.reason,
     ),
     ...(transaction.descriptionSignals ?? []),
   ]
@@ -275,22 +353,10 @@ export function AnalysisDetailsPage() {
               <Divider />
 
               <Box sx={{ py: 2, textAlign: 'center' }}>
-                <Typography
-                  sx={{
-                    fontSize: 48,
-                    lineHeight: 1,
-                    fontWeight: 800,
-                  }}
-                >
-                  {transaction.riskScore}
-                  <Typography
-                    component="span"
-                    color="text.secondary"
-                    sx={{ fontSize: 20 }}
-                  >
-                    /100
-                  </Typography>
-                </Typography>
+                <RiskScoreRing
+                  score={transaction.riskScore}
+                  level={transaction.riskLevel}
+                />
 
                 <Box sx={{ mt: 2 }}>
                   <RiskLevelChip level={transaction.riskLevel} />
@@ -399,75 +465,65 @@ export function AnalysisDetailsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-          <Stack spacing={2}>
-            <Typography variant="h3">
-              Analyst actions
-            </Typography>
+      {transaction.status === 'In review' && (
+        <Card>
+          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+            <Stack spacing={2}>
+              <Typography variant="h3">
+                Analyst actions
+              </Typography>
 
-            <Typography
-              variant="body2"
-              color="text.secondary"
-            >
-              Update the operational status after reviewing the payment.
-            </Typography>
-
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={1.5}
-            >
-              <Button
-                fullWidth
-                variant={
-                  transaction.status === 'Approved'
-                    ? 'contained'
-                    : 'outlined'
-                }
-                color="success"
-                startIcon={<CheckCircleOutlined />}
-                onClick={() =>
-                  handleStatusChange('Approved', 'Approved')
-                }
+              <Typography
+                variant="body2"
+                color="text.secondary"
               >
-                Approve payment
-              </Button>
+                Update the operational status after reviewing the payment.
+              </Typography>
 
-              <Button
-                fullWidth
-                variant={
-                  transaction.status === 'In review'
-                    ? 'contained'
-                    : 'outlined'
-                }
-                color="warning"
-                startIcon={<FlagOutlined />}
-                onClick={() =>
-                  handleStatusChange('In review', 'In review')
-                }
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1.5}
               >
-                Flag for review
-              </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="success"
+                  startIcon={<CheckCircleOutlined />}
+                  onClick={() =>
+                    handleStatusChange('Approved', 'Approved')
+                  }
+                >
+                  Approve payment
+                </Button>
 
-              <Button
-                fullWidth
-                variant={
-                  transaction.status === 'Blocked'
-                    ? 'contained'
-                    : 'outlined'
-                }
-                color="error"
-                startIcon={<BlockOutlined />}
-                onClick={() =>
-                  handleStatusChange('Blocked', 'Blocked')
-                }
-              >
-                Block payment
-              </Button>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="warning"
+                  startIcon={<FlagOutlined />}
+                  onClick={() =>
+                    handleStatusChange('In review', 'In review')
+                  }
+                >
+                  Flag for review
+                </Button>
+
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="error"
+                  startIcon={<BlockOutlined />}
+                  onClick={() =>
+                    handleStatusChange('Blocked', 'Blocked')
+                  }
+                >
+                  Block payment
+                </Button>
+              </Stack>
             </Stack>
-          </Stack>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </Stack>
   )
 }

@@ -56,7 +56,11 @@ export async function analyzePaymentMock(
     is_unusually_large: payment.amount >= 10_000 ? 1 : 0,
     is_unusual_country: knownCountries.has(payment.country) ? 0 : 1,
     is_risky_payment_channel:
-      /crypto|wire|api/i.test(payment.paymentChannel) ? 1 : 0,
+      /crypto|international_transfer|cash_withdrawal|wire|api/i.test(
+        payment.paymentChannel,
+      )
+        ? 1
+        : 0,
   }
 
   if (hiddenFeatures.is_unusually_large) {
@@ -110,6 +114,7 @@ export async function analyzePaymentMock(
   return {
     riskScore: finalScore,
     riskLevel,
+    status: 'In review',
     triggeredRules,
     descriptionSignals,
     recommendedAction,
@@ -127,9 +132,14 @@ async function analyzePaymentApi(
 export async function analyzePayment(
   payment: PaymentAnalysisInput,
 ): Promise<RiskAnalysisResult> {
-  if (environment.useMock) {
-    return analyzePaymentMock(payment)
-  }
+  const analysis = environment.useMock
+    ? await analyzePaymentMock(payment)
+    : await analyzePaymentApi(payment)
 
-  return analyzePaymentApi(payment)
+  // every new analysis enters the analyst review workflow first
+  // the final decision is made separately with Approve or Block
+  return {
+    ...analysis,
+    status: 'In review',
+  }
 }
