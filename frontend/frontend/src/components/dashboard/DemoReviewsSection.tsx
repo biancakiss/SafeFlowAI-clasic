@@ -5,7 +5,6 @@ import {
   Box,
   Card,
   CardContent,
-  Chip,
   Rating,
   Typography,
 } from '@mui/material'
