@@ -31,6 +31,13 @@ export interface ResetPasswordData {
   new_password: string
 }
 
+export interface ProfileUpdateData {
+  first_name: string
+  last_name: string
+  bank_name: string
+  country: string
+}
+
 export async function registerUser(data: RegistrationData): Promise<User> {
   return apiRequest<User>('/api/v1/auth/register', {
     method: 'POST',
@@ -53,6 +60,17 @@ export async function loginUser(
 
 export async function getCurrentUser(token: string): Promise<User> {
   return apiRequest<User>('/api/v1/auth/me', { token })
+}
+
+export async function updateCurrentUserProfile(
+  data: ProfileUpdateData,
+  token: string,
+): Promise<User> {
+  return apiRequest<User>('/api/v1/auth/me/profile', {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(data),
+  })
 }
 
 export async function requestPasswordReset(

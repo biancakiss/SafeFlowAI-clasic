@@ -14,6 +14,9 @@ from app.repositories.transaction_repository import (
 from app.risk_engine.scoring import calculate_risk
 from app.schemas.analysis import AnalysisResponse
 from app.schemas.transaction import TransactionRequest
+from app.services.notification_observer import (
+    TransactionStatusNotificationObserver,
+)
 
 
 RECENT_TRANSACTION_WINDOW_MINUTES = 60
@@ -218,6 +221,12 @@ def analyze_transaction(
         triggered_rules=triggered_rules,
         model_version="transaction-rules-v1",
         transaction_db_id=transaction.id,
+    )
+
+    TransactionStatusNotificationObserver(db).on_transaction_analyzed(
+        transaction=transaction,
+        risk_level=analysis.risk_level,
+        risk_score=analysis.risk_score,
     )
 
     return AnalysisResponse(

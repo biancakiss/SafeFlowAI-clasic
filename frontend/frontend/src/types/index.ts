@@ -188,6 +188,7 @@ export interface UrlAnalysisInput {
 }
 
 export interface UrlAnalysisResult {
+  urlId?: number
   analysisId?: number
   url: string
   predictedClass?: string | null

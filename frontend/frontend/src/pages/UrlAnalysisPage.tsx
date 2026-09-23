@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import {
   Alert,
   Box,
@@ -9,6 +9,9 @@ import {
   CircularProgress,
   Divider,
   LinearProgress,
+  List,
+  ListItemButton,
+  ListItemText,
   Stack,
   TextField,
   Typography,
@@ -21,7 +24,11 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 
 import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
-import { analyzeUrl } from '../services/urlAnalysisService'
+import {
+  analyzeUrl,
+  getUrlAnalyses,
+  getUrlAnalysisDetails,
+} from '../services/urlAnalysisService'
 import type { UrlAnalysisResult } from '../types'
 
 const analysisPanelSx = {
@@ -107,6 +114,16 @@ function getErrorMessage(error: unknown) {
   }
 
   return 'The URL could not be analyzed. Please try again.'
+}
+
+function formatCreatedAt(value?: string | null) {
+  if (!value) {
+    return 'Date unavailable'
+  }
+
+  const date = new Date(value)
+
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }
 
 function UrlResultCard({
@@ -363,8 +380,45 @@ function UrlResultCard({
 export function UrlAnalysisPage() {
   const [url, setUrl] = useState('')
   const [result, setResult] = useState<UrlAnalysisResult | null>(null)
+  const [history, setHistory] = useState<UrlAnalysisResult[]>([])
   const [error, setError] = useState('')
+  const [historyError, setHistoryError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [historyLoading, setHistoryLoading] = useState(true)
+  const [detailsLoadingId, setDetailsLoadingId] = useState<number | null>(null)
+
+  const loadHistory = async () => {
+    setHistoryLoading(true)
+    setHistoryError('')
+
+    try {
+      const analyses = await getUrlAnalyses()
+      setHistory(analyses)
+    } catch (historyLoadError) {
+      setHistoryError(getErrorMessage(historyLoadError))
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadHistory()
+  }, [])
+
+  const handleHistorySelect = async (urlId: number) => {
+    setDetailsLoadingId(urlId)
+    setError('')
+
+    try {
+      const analysisDetails = await getUrlAnalysisDetails(urlId)
+      setResult(analysisDetails)
+      setUrl(analysisDetails.url)
+    } catch (detailsError) {
+      setError(getErrorMessage(detailsError))
+    } finally {
+      setDetailsLoadingId(null)
+    }
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -400,6 +454,10 @@ export function UrlAnalysisPage() {
       })
 
       setResult(analysisResult)
+      setHistory((current) => [
+        analysisResult,
+        ...current.filter((item) => item.urlId !== analysisResult.urlId),
+      ])
     } catch (analysisError) {
       setError(getErrorMessage(analysisError))
     } finally {
@@ -526,6 +584,111 @@ export function UrlAnalysisPage() {
 
         <UrlResultCard result={result} />
       </Box>
+
+      <Card sx={analysisPanelSx}>
+        <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              gap: 2,
+              flexDirection: { xs: 'column', sm: 'row' },
+            }}
+          >
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 750, color: '#0B1F3A' }}>
+                URL analysis history
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 0.5, color: '#5D6B82' }}>
+                Select a previous analysis to load its full details.
+              </Typography>
+            </Box>
+
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={() => void loadHistory()}
+              disabled={historyLoading || detailsLoadingId !== null}
+              sx={{
+                color: '#0B817A',
+                borderColor: '#8AD6CD',
+                '&:hover': {
+                  borderColor: '#0B817A',
+                  backgroundColor: '#E8F8F5',
+                },
+              }}
+            >
+              Refresh
+            </Button>
+          </Box>
+
+          {historyError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {historyError}
+            </Alert>
+          )}
+
+          {historyLoading ? (
+            <Box sx={{ display: 'grid', placeItems: 'center', py: 4 }}>
+              <CircularProgress size={28} />
+            </Box>
+          ) : history.length === 0 && !historyError ? (
+            <Typography variant="body2" sx={{ py: 3, color: '#5D6B82' }}>
+              No URL analyses have been saved yet.
+            </Typography>
+          ) : (
+            <List disablePadding sx={{ mt: 2 }}>
+              {history.map((analysis, index) => (
+                <ListItemButton
+                  key={`${analysis.urlId ?? analysis.analysisId ?? analysis.url}-${index}`}
+                  onClick={() => {
+                    if (analysis.urlId !== undefined) {
+                      void handleHistorySelect(analysis.urlId)
+                    }
+                  }}
+                  disabled={
+                    analysis.urlId === undefined || detailsLoadingId !== null
+                  }
+                  divider={index < history.length - 1}
+                  sx={{
+                    px: 1.5,
+                    py: 1.25,
+                    borderRadius: 2,
+                    '&.Mui-disabled': {
+                      opacity: 0.65,
+                    },
+                  }}
+                >
+                  <ListItemText
+                    primary={
+                      <Typography noWrap sx={{ fontWeight: 650, color: '#0B1F3A' }}>
+                        {analysis.url}
+                      </Typography>
+                    }
+                    secondary={`${formatClassification(analysis.classification)} · ${formatCreatedAt(analysis.createdAt)}`}
+                    slotProps={{
+                      secondary: {
+                        style: { color: '#5D6B82' },
+                      },
+                    }}
+                  />
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, ml: 2 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#0B1F3A' }}>
+                      {analysis.riskScore}/100
+                    </Typography>
+                    <RiskLevelChip level={analysis.riskLevel} />
+                    {detailsLoadingId === analysis.urlId && (
+                      <CircularProgress size={18} />
+                    )}
+                  </Box>
+                </ListItemButton>
+              ))}
+            </List>
+          )}
+        </CardContent>
+      </Card>
     </Stack>
   )
 }

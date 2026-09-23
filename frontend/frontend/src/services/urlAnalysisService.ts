@@ -5,6 +5,7 @@ import type {
   UrlAnalysisResult,
 } from '../types'
 import { apiRequest } from './apiClient'
+import { ACCESS_TOKEN_KEY } from './authService'
 
 interface BackendUrlRule {
   rule_name: string
@@ -13,7 +14,9 @@ interface BackendUrlRule {
 }
 
 interface BackendUrlResponse {
+  id?: number
   analysis_id?: number
+  user_id?: number
   url: string
   predicted_class?: string | null
   model_score?: number | null
@@ -101,22 +104,7 @@ function mapRule(rule: BackendUrlRule): RiskRule {
   }
 }
 
-export async function analyzeUrl(
-  input: UrlAnalysisInput,
-): Promise<UrlAnalysisResult> {
-  const token = localStorage.getItem('safeflow_access_token') ?? undefined
-
-  const response = await apiRequest<BackendUrlResponse>(
-    '/api/v1/urls/analyze',
-    {
-      method: 'POST',
-      token,
-      body: JSON.stringify({
-        url: input.url.trim(),
-      }),
-    },
-  )
-
+function mapUrlResponse(response: BackendUrlResponse): UrlAnalysisResult {
   const triggeredRules = (response.triggered_rules ?? []).map(mapRule)
   const riskLevel = normalizeRiskLevel(response.risk_level)
 
@@ -126,6 +114,7 @@ export async function analyzeUrl(
   )
 
   return {
+    urlId: response.id,
     analysisId: response.analysis_id,
     url: response.url,
     predictedClass: response.predicted_class,
@@ -143,4 +132,44 @@ export async function analyzeUrl(
     modelVersion: response.model_version,
     createdAt: response.created_at,
   }
+}
+
+export async function analyzeUrl(
+  input: UrlAnalysisInput,
+): Promise<UrlAnalysisResult> {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY) ?? undefined
+
+  const response = await apiRequest<BackendUrlResponse>(
+    '/api/v1/urls/analyze',
+    {
+      method: 'POST',
+      token,
+      body: JSON.stringify({
+        url: input.url.trim(),
+      }),
+    },
+  )
+
+  return mapUrlResponse(response)
+}
+
+export async function getUrlAnalyses(): Promise<UrlAnalysisResult[]> {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY) ?? undefined
+  const response = await apiRequest<BackendUrlResponse[]>('/api/v1/urls/', {
+    token,
+  })
+
+  return response.map(mapUrlResponse)
+}
+
+export async function getUrlAnalysisDetails(
+  urlId: number,
+): Promise<UrlAnalysisResult> {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY) ?? undefined
+  const response = await apiRequest<BackendUrlResponse>(
+    `/api/v1/urls/${urlId}`,
+    { token },
+  )
+
+  return mapUrlResponse(response)
 }

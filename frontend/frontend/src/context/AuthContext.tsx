@@ -14,8 +14,13 @@ import {
   getStoredToken,
   loginUser,
   registerUser,
+  updateCurrentUserProfile,
 } from '../services/authService'
-import type { LoginCredentials, RegistrationData } from '../services/authService'
+import type {
+  LoginCredentials,
+  ProfileUpdateData,
+  RegistrationData,
+} from '../services/authService'
 import type { User } from '../types'
 
 interface AuthContextValue {
@@ -24,6 +29,7 @@ interface AuthContextValue {
   isAuthenticated: boolean
   login: (credentials: LoginCredentials) => Promise<void>
   register: (data: RegistrationData) => Promise<void>
+  updateProfile: (updates: ProfileUpdateData) => Promise<void>
   logout: () => void
 }
 
@@ -75,6 +81,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await login({ email: data.email, password: data.password })
   }, [login])
 
+  const updateProfile = useCallback(async (updates: ProfileUpdateData) => {
+    const token = getStoredToken()
+
+    if (!token) {
+      throw new Error('You must be signed in to update your profile.')
+    }
+
+    const updatedUser = await updateCurrentUserProfile(updates, token)
+    setUser(updatedUser)
+  }, [])
+
   const logout = useCallback(() => {
     clearStoredToken()
     setUser(null)
@@ -87,9 +104,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isAuthenticated: user !== null,
       login,
       register,
+      updateProfile,
       logout,
     }),
-    [user, loading, login, register, logout],
+    [user, loading, login, register, updateProfile, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

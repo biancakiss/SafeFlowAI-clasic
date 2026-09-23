@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.session import Base
 
@@ -48,3 +48,15 @@ class Notification(Base):
         default=datetime.utcnow,
         nullable=False,
     )
+
+    transaction = relationship(
+        "Transaction",
+        lazy="joined",
+    )
+
+    @property
+    def transaction_id(self) -> str | None:
+        if self.transaction is None:
+            return None
+
+        return self.transaction.transaction_id
