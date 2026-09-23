@@ -36,12 +36,12 @@ class Message(Base):
 
     sender = Column(
         String(255),
-        nullable=True,
+        nullable=False,
     )
 
     receiver = Column(
         String(255),
-        nullable=True,
+        nullable=False,
     )
 
     subject = Column(
