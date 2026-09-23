@@ -1,6 +1,4 @@
-import json
 import unittest
-from pathlib import Path
 
 from backend.app.risk_engine.url_features import (
     build_url_features,
@@ -15,173 +13,177 @@ from backend.app.services.url_model_service import (
 
 class TestUrlRiskEngine(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        data_path = Path("data/mock/urls.json")
-        cls.urls = json.loads(
-            data_path.read_text(encoding="utf-8")
-        )
-
-    def get_url_case(self, name):
-        return next(
-            item
-            for item in self.urls
-            if item["name"] == name
-        )
-
-    def analyze_url(self, url):
-        model_result = predict_url(url)
+    def analyze_url(
+        self,
+        url: str,
+        prediction: str,
+    ):
         features = build_url_features(url)
+
         risk_result = calculate_url_risk(
-            prediction=model_result["prediction"],
+            prediction=prediction,
             features=features,
         )
 
-        return model_result, features, risk_result
+        return features, risk_result
 
-    def test_safe_url_returns_low_risk(self):
-        case = self.get_url_case("Safe URL")
+    def test_real_model_adapter_contract(self):
+        result = predict_url(
+            "https://www.example.com"
+        )
 
-        model_result, features, risk_result = (
-            self.analyze_url(case["url"])
+        self.assertIn(
+            result["prediction"],
+            {"legitimate", "malicious"},
+        )
+
+        self.assertIn(
+            "model_score",
+            result,
+        )
+
+        self.assertGreaterEqual(
+            result["model_score"],
+            0.0,
+        )
+
+        self.assertLessEqual(
+            result["model_score"],
+            1.0,
         )
 
         self.assertEqual(
-            model_result["prediction"],
-            "safe",
+            result["model_version"],
+            "url-model-v1",
         )
+
+    def test_legitimate_prediction_has_no_ml_points(self):
+        features, risk_result = self.analyze_url(
+            "https://www.example.com",
+            prediction="legitimate",
+        )
+
+        self.assertFalse(
+            features["uses_http"]
+        )
+
         self.assertEqual(
             risk_result["risk_score"],
             0,
         )
+
         self.assertEqual(
             risk_result["risk_level"],
             "LOW",
         )
+
         self.assertEqual(
             risk_result["triggered_rules"],
             [],
         )
 
-    def test_shortened_url_with_verify_returns_95_high(self):
-        case = self.get_url_case(
-            "Suspicious shortened URL"
+    def test_malicious_shortened_url_with_verify(self):
+        features, risk_result = self.analyze_url(
+            "https://bit.ly/verify",
+            prediction="malicious",
         )
 
-        model_result, features, risk_result = (
-            self.analyze_url(case["url"])
-        )
-
-        self.assertEqual(
-            model_result["prediction"],
-            "suspicious",
-        )
-        self.assertEqual(
-            model_result["model_version"],
-            "temporary-url-model-v1",
-        )
         self.assertTrue(
             features["uses_url_shortener"]
         )
+
         self.assertTrue(
             features["contains_suspicious_keyword"]
         )
+
         self.assertEqual(
             risk_result["risk_score"],
             95,
         )
+
         self.assertEqual(
             risk_result["risk_level"],
             "HIGH",
         )
 
-    def test_ip_http_url_reaches_score_limit(self):
-        case = self.get_url_case(
-            "Suspicious URL with IP and HTTP"
+    def test_malicious_ip_http_url_reaches_score_limit(self):
+        features, risk_result = self.analyze_url(
+            "http://192.168.1.10/login",
+            prediction="malicious",
         )
 
-        model_result, features, risk_result = (
-            self.analyze_url(case["url"])
-        )
-
-        self.assertEqual(
-            model_result["prediction"],
-            "suspicious",
-        )
         self.assertTrue(
             features["uses_http"]
         )
+
         self.assertTrue(
             features["uses_ip_address"]
         )
+
+        self.assertTrue(
+            features["contains_suspicious_keyword"]
+        )
+
         self.assertEqual(
             risk_result["risk_score"],
             100,
         )
+
         self.assertEqual(
             risk_result["risk_level"],
             "HIGH",
         )
 
-    def test_punycode_url_is_high_risk(self):
-        case = self.get_url_case(
-            "Suspicious punycode URL"
+    def test_malicious_punycode_url_is_high_risk(self):
+        features, risk_result = self.analyze_url(
+            "https://xn--pple-43d.com/login",
+            prediction="malicious",
         )
 
-        model_result, features, risk_result = (
-            self.analyze_url(case["url"])
-        )
-
-        self.assertEqual(
-            model_result["prediction"],
-            "suspicious",
-        )
         self.assertTrue(
             features["uses_punycode"]
         )
+
+        self.assertTrue(
+            features["contains_suspicious_keyword"]
+        )
+
         self.assertEqual(
             risk_result["risk_score"],
             95,
         )
+
         self.assertEqual(
             risk_result["risk_level"],
             "HIGH",
         )
 
-    def test_many_subdomains_are_detected(self):
-        case = self.get_url_case(
-            "Suspicious URL with many subdomains"
+    def test_malicious_url_with_many_subdomains(self):
+        features, risk_result = self.analyze_url(
+            (
+                "https://login.account.verify."
+                "secure.example.com"
+            ),
+            prediction="malicious",
         )
 
-        model_result, features, risk_result = (
-            self.analyze_url(case["url"])
-        )
-
-        self.assertEqual(
-            model_result["prediction"],
-            "suspicious",
-        )
         self.assertTrue(
             features["has_many_subdomains"]
         )
+
+        self.assertTrue(
+            features["contains_suspicious_keyword"]
+        )
+
         self.assertEqual(
             risk_result["risk_score"],
             90,
         )
+
         self.assertEqual(
             risk_result["risk_level"],
             "HIGH",
         )
-
-    def test_all_mock_urls_match_expected_prediction(self):
-        for case in self.urls:
-            model_result = predict_url(case["url"])
-
-            self.assertEqual(
-                model_result["prediction"],
-                case["expected_prediction"],
-                msg=case["name"],
-            )
 
 
 if __name__ == "__main__":

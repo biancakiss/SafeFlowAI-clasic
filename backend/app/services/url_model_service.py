@@ -1,47 +1,94 @@
+from pathlib import Path
+import sys
 from typing import Any
 
-from ..risk_engine.url_features import build_url_features
+import joblib
+import pandas as pd
 
 
-MODEL_VERSION = "temporary-url-model-v1"
+PROJECT_ROOT = (
+    Path(__file__)
+    .resolve()
+    .parents[3]
+)
+
+URL_FEATURES_PATH = (
+    PROJECT_ROOT
+    / "notebooks"
+    / "URLs"
+)
+
+if str(URL_FEATURES_PATH) not in sys.path:
+    sys.path.insert(
+        0,
+        str(URL_FEATURES_PATH),
+    )
+
+from url_features import extract_features
+
+
+MODEL_PATH = (
+    PROJECT_ROOT
+    / "ml"
+    / "artifacts"
+    / "url_scam"
+    / "url_model.joblib"
+)
+
+MODEL_VERSION = "url-model-v1"
+
+_model_artifact: dict[str, Any] | None = None
+
+
+def _load_model_artifact() -> dict[str, Any]:
+    global _model_artifact
+
+    if _model_artifact is None:
+        if not MODEL_PATH.exists():
+            raise FileNotFoundError(
+                f"URL model file does not exist: {MODEL_PATH}"
+            )
+
+        _model_artifact = joblib.load(MODEL_PATH)
+
+    return _model_artifact
 
 
 def predict_url(url: str) -> dict[str, Any]:
-    """
-    Temporary rule-based URL model adapter.
+    artifact = _load_model_artifact()
 
-    This adapter follows the same output contract that the real
-    machine-learning model will use later.
-    """
+    model = artifact["model"]
+    feature_columns = artifact["feature_columns"]
 
-    features = build_url_features(url)
-
-    strong_suspicious_signals = [
-        features["uses_ip_address"],
-        features["uses_url_shortener"],
-        features["uses_punycode"],
-        features["contains_suspicious_keyword"],
-    ]
-
-    suspicious_signal_count = sum(
-        int(signal)
-        for signal in strong_suspicious_signals
+    url_features = extract_features(
+        pd.Series([url])
     )
 
-    is_suspicious = suspicious_signal_count > 0
+    url_features = url_features[
+        feature_columns
+    ]
 
-    if is_suspicious:
-        model_score = min(
-            0.99,
-            0.75 + 0.05 * (suspicious_signal_count - 1),
+    prediction_value = int(
+        model.predict(url_features)[0]
+    )
+
+    malicious_probability = None
+
+    if hasattr(model, "predict_proba"):
+        malicious_probability = float(
+            model.predict_proba(
+                url_features
+            )[0][1]
         )
-        prediction = "suspicious"
-    else:
-        model_score = 0.05
-        prediction = "safe"
+
+    prediction = (
+        "malicious"
+        if prediction_value == 1
+        else "legitimate"
+    )
 
     return {
         "prediction": prediction,
-        "model_score": round(model_score, 6),
+        "model_score": malicious_probability,
         "model_version": MODEL_VERSION,
     }

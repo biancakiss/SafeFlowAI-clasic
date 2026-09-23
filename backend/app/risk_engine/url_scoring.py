@@ -1,9 +1,5 @@
 from typing import Any
 
-from .url_features import (
-    build_url_features,
-)
-
 
 def determine_url_risk_level(
     risk_score: int,
@@ -25,16 +21,16 @@ def calculate_url_risk(
     triggered_rules = []
     risk_score = 0
 
-    if prediction == "suspicious":
+    if prediction == "malicious":
         risk_score += 70
 
         triggered_rules.append(
             {
-                "rule_name": "ml_predicted_suspicious",
+                "rule_name": "ml_predicted_malicious",
                 "points": 70,
                 "reason": (
                     "The URL model classified "
-                    "the URL as suspicious."
+                    "the URL as malicious."
                 ),
             }
         )
