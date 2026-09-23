@@ -1,0 +1,45 @@
+{
+    "model_name": "RandomForestClassifier",
+    "model_type": "malicious_url_detection",
+    "model_file": "url_model.joblib",
+    "input_file": "corrected_preprocessed_urls.csv",
+    "url_column": "url",
+    "target_column": "status",
+    "feature_columns": [
+        "url_length",
+        "num_digits",
+        "digit_ratio",
+        "special_char_ratio",
+        "num_hyphens",
+        "num_underscores",
+        "num_slashes",
+        "num_dots",
+        "num_question_marks",
+        "num_equals",
+        "num_at_symbols",
+        "num_percent",
+        "num_hashes",
+        "num_ampersands",
+        "num_subdomains",
+        "is_https",
+        "has_suspicious_word"
+    ],
+    "label_mapping": {
+        "0": "legitimate",
+        "1": "malicious"
+    },
+    "training_parameters": {
+        "n_estimators": 100,
+        "random_state": 42,
+        "class_weight": "balanced"
+    },
+    "metrics": {
+        "accuracy": 0.9072508786693728,
+        "legitimate_precision": 0.9200554465229266,
+        "legitimate_recall": 0.8797406892207553,
+        "legitimate_f1_score": 0.8994465501626807,
+        "malicious_precision": 0.8967378443855992,
+        "malicious_recall": 0.9317963609114114,
+        "malicious_f1_score": 0.9139310138902447
+    }
+}
