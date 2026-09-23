@@ -2,274 +2,526 @@
 
 
 
-## Getting started
+# SafeFlow AI
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+SafeFlow AI is a payment and communication protection platform that analyzes messages, emails, URLs, and financial transactions using machine learning models and a rule-based risk engine.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The application provides an explainable risk assessment for every analyzed item.
 
-## Add your files
+## Main Features
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+- User registration and authentication using JWT
+- SMS and email spam/phishing analysis
+- Malicious URL detection
+- Transaction fraud detection
+- Rule-based risk engine
+- Machine learning predictions
+- Explainable risk scores and triggered rules
+- Transaction status management
+- Dashboard with risk activity and risk distribution
+- Email notifications
+- PostgreSQL database
+- Docker-based local development environment
+- Swagger API documentation
 
-```
-cd existing_repo
-git remote add origin https://gitlab.endava.com/techfest/team4_placeholder.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-* [Set up project integrations](https://gitlab.endava.com/techfest/team4_placeholder/-/settings/integrations)
-
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
-
-## Local setup
-
-### 1. Clone the repository
-
-Clone the repository and open the project folder:
-
-```powershell
-git clone <repository-url>
-cd team4_placeholder
-```
-
-### 2. Create the environment file
-
-Copy the environment template:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-The `.env` file contains local credentials and must not be committed or pushed to Git.
-
-### 3. Start Rancher Desktop
-
-Open Rancher Desktop and wait until it is fully started.
-
-Docker Engine must be running. Kubernetes is not required for this project.
-
-Verify that Docker is available:
-
-```powershell
-docker --version
-docker compose version
-```
-
-### 4. Start PostgreSQL and pgAdmin
-
-Make sure you are in the project root, where `docker-compose.yaml` is located:
-
-```powershell
-docker compose -f docker-compose.yaml config
-```
-
-If no error is displayed, start the containers:
-
-```powershell
-docker compose -f docker-compose.yaml up -d
-```
-
-Check the container status:
-
-```powershell
-docker ps
-```
-
-The following containers should be running:
+## Application Architecture
 
 ```text
-safeflow-postgres
-safeflow-pgadmin
+Frontend
+    |
+    | HTTP requests
+    v
+FastAPI Backend
+    |
+    +-- Authentication
+    +-- Message Analysis
+    +-- URL Analysis
+    +-- Transaction Analysis
+    +-- Risk Engine
+    +-- Dashboard
+    +-- Notifications
+    |
+    v
+PostgreSQL Database
+
+Machine Learning Artifacts
+    |
+    +-- SMS spam model
+    +-- Email spam model
+    +-- URL classification model
+    +-- Transaction fraud model
+
+  ```
+## Technology Stack
+
+  ### Backend
+
+    Python 3.13
+    FastAPI
+    SQLAlchemy
+    PostgreSQL
+    Pydantic
+    JWT authentication
+    Uvicorn
+    scikit-learn
+    pandas
+    NumPy
+    joblib 
+  
+  ### Frontend
+
+    React
+    TypeScript
+    Vite
+    Material UI
+    React Router
+    Recharts
+    React Globe GL
+  ### Infrastructure
+
+    Docker
+    Docker Compose
+    Rancher Desktop
+    PostgreSQL
+    pgAdmin
+
+  ### Project Structure
+
+  ```text
+    backend/
+    └── app/
+        ├── api/
+        │   ├── analyses.py
+        │   ├── auth.py
+        │   ├── dashboard.py
+        │   ├── messages.py
+        │   ├── notification.py
+        │   ├── risk.py
+        │   ├── transaction.py
+        │   └── urls.py
+        │
+        ├── core/
+        │   ├── config.py
+        │   └── security.py
+        │
+        ├── database/
+        │   └── session.py
+        │
+        ├── models/
+        │   ├── analysis.py
+        │   ├── message.py
+        │   ├── notification.py
+        │   ├── transaction.py
+        │   ├── url.py
+        │   └── user.py
+        │
+        ├── repositories/
+        ├── risk_engine/
+        ├── schemas/
+        └── services/
+
+    data/
+    ├── evaluation/
+    ├── processed/
+    └── raw/
+
+    ml/
+    └── artifacts/
+        ├── email_spam/
+        ├── sms_spam/
+        └── transactions/
+
+    notebooks/
+    ├── Email/
+    ├── SMS/
+    ├── URLs/
+    ├── messages_cleaning.ipynb
+    └── transactions/
+
+    pipeline/
+    ├── cleaning/
+    ├── database/
+    ├── dags/
+    ├── features/
+    ├── ingestion/
+    └── config.py
+
+    frontend/
+    └── frontend/
+        ├── src/
+        ├── public/
+        ├── Dockerfile
+        └── package.json
+
+    tests/
+
+  
+  
 ```
 
-### 5. Access and configure pgAdmin
+## Requirements
 
-Open pgAdmin in your browser:
+    Git
+    Python 3.13
+    Docker Desktop or Rancher Desktop
+    Node.js and npm
+    PostgreSQL is provided through Docker
 
-```text
-http://localhost:5050
-```
+## Clone the Repository
 
-You will see the pgAdmin login page.
+    git clone https://gitlab.endava.com/techfest/team4_placeholder.git
 
-Use the values from your local `.env` file:
+    cd team4_placeholder
 
-```text
-Email: the value of PGADMIN_EMAIL
-Password: the value of PGADMIN_PASSWORD
-```
+## Environment Configuration
 
-For example:
+    Create a .env file in the project root.
 
-```text
-Email: admin@safeflow.dev
-Password: SafeFlowAdmin123
-```
+    Do not commit .env to Git.
 
-After logging in, register the PostgreSQL server:
+    Example:
+     ```text
+        POSTGRES_DB=safeflow
+        POSTGRES_USER=safeflow_user
+        POSTGRES_PASSWORD=your_local_database_password
+        POSTGRES_PORT=5432
 
-1. In the left panel, right-click **Servers**.
-2. Select **Register → Server**.
-3. In the **General** tab, enter:
+        PGADMIN_EMAIL=admin@safeflow.dev
+        PGADMIN_PASSWORD=your_pgadmin_password
 
-```text
-Name: SafeFlow PostgreSQL
-```
+        DATABASE_URL=postgresql+psycopg://safeflow_user:your_local_database_password@localhost:5432/safeflow
 
-4. Open the **Connection** tab and enter:
+        JWT_SECRET_KEY=your_jwt_secret_key
+        JWT_ALGORITHM=HS256
+        ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-```text
-Host name/address: postgres
-Port: 5432
-Maintenance database: safeflow
-Username: safeflow_user
-Password: the value of POSTGRES_PASSWORD from .env
-```
+        SMTP_HOST=smtp.gmail.com
+        SMTP_PORT=587
+        SMTP_USERNAME=your_email@gmail.com
+        SMTP_PASSWORD=your_app_password
+        SMTP_FROM=your_email@gmail.com
 
-5. Enable **Save password**.
-6. Click **Save**.
+        
+        
+        ```
+        
+    For team development, create a safe .env.example file containing variable names but no real secrets.
 
-Important: use `postgres` as the host name, not `localhost`.
+## Start the Application with Docker
 
-The pgAdmin and PostgreSQL containers communicate through the Docker network, where the PostgreSQL service is called `postgres`.
+    Start Rancher Desktop and make sure that Docker Engine is running.
 
-After saving the connection, expand:
+    Verify Docker:
 
-```text
-Servers
-└── SafeFlow PostgreSQL
-    └── Databases
-        └── safeflow
-            └── Schemas
-                └── public
-                    └── Tables
-```
+    docker --version
+    docker compose version
 
-Right-click **Tables** and select **Refresh** to see the database tables.
+    Validate the Docker Compose configuration:
 
-The PostgreSQL database is available to applications running on the host machine at:
+    docker compose config
 
-```text
-localhost:5432
-```
+    Start all services:
 
-Other Docker containers connect to PostgreSQL using:
+    docker compose up -d --build
 
-```text
-postgres:5432
-```
+    Check the running containers:
 
-### 6. Install Python dependencies
+    docker compose ps
 
-Activate the virtual environment and install the project dependencies:
+    Expected services:
 
-```powershell
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-```
+    safeflow-postgres
+    safeflow-backend
+    safeflow-frontend
+    safeflow-pgadmin
 
-### 7. Start the FastAPI backend
+## Application URLs
 
-```powershell
-cd backend
-python -m uvicorn app.main:app --reload
-```
+    Frontend:
+    http://localhost:3000
 
-The API will be available at:
+    Backend:
+    http://localhost:8000
 
-```text
-http://127.0.0.1:8000
-```
+    Swagger documentation:
+    http://localhost:8000/docs
+
+    Health check:
+    http://localhost:8000/health
+
+    pgAdmin:
+    http://localhost:5050
+
+## PostgreSQL and pgAdmin
+
+Log in to pgAdmin using the values from .env:
+
+    Email: PGADMIN_EMAIL
+    Password: PGADMIN_PASSWORD
+
+When registering the PostgreSQL server in pgAdmin, use:
+
+    Name: SafeFlow PostgreSQL
+    Host: postgres
+    Port: 5432
+    Database: safeflow
+    Username: safeflow_user
+    Password: POSTGRES_PASSWORD
+
+Use postgres as the host inside pgAdmin because pgAdmin and PostgreSQL communicate through the Docker network.
+
+Applications running directly on Windows use:
+
+    localhost:5432
+
+Docker containers use:
+
+    postgres:5432
+
+The backend creates the SQLAlchemy tables during application startup.
+
+
+## Run the backend Locally
+
+Activate the virtual environment:
+
+    .\.venv\Scripts\activate
+
+Install dependencies:
+
+    pip install -r requirements.txt
+
+Start the backend from the project root:
+
+    $env:PYTHONPATH = (Get-Location).Path
+
+    python -m uvicorn app.main:app --reload --app-dir backend
+
+The backend will be available at:
+
+    http://127.0.0.1:8000
 
 Swagger documentation:
 
-```text
-http://127.0.0.1:8000/docs
-```
+    http://127.0.0.1:8000/docs
 
-Health check:
+## Run the Frontend Locally
 
-```text
-http://127.0.0.1:8000/health
-```
+Open a second terminal:
 
-### 8. Stop the containers
+    cd frontend\frontend
+    npm install
+    npm run dev
 
-To stop the containers without deleting the database data:
+The frontend will be available at:
 
-```powershell
-docker compose -f docker-compose.yaml down
-```
+    http://localhost:5173
 
-Do not use `docker compose down -v` unless you intentionally want to delete the local database volumes.
+The frontend environment file is:
+
+    frontend/frontend/.env.example
+
+Example:
+
+    VITE_API_BASE_URL=
+    VITE_MOCK_ENABLED=false
+
+When running Vite locally, requests are proxied to the FastAPI backend.
+
+## Backend API
+
+All protected endpoints require a JWT bearer token.
+
+   ### Authentication
+
+    POST /api/v1/auth/register
+    POST /api/v1/auth/login
+    GET  /api/v1/auth/me
+    PATCH /api/v1/auth/me/profile
+    POST /api/v1/auth/forgot-password
+    POST /api/v1/auth/verify-reset-code
+    POST /api/v1/auth/reset-password
+
+   ### Message Analysis
+
+    POST /api/v1/messages/analyze
+    GET  /api/v1/messages/
+    GET  /api/v1/messages/{message_id}
+
+   ### URL Analysis
+
+    POST /api/v1/urls/analyze
+    GET  /api/v1/urls/
+    GET  /api/v1/urls/{url_id}
+
+   ### Transaction Analysis
+
+    POST /api/v1/transactions/analyze
+    GET  /api/v1/transactions/
+    GET  /api/v1/transactions/{transaction_id}
+    PATCH /api/v1/transactions/{transaction_id}/status
+
+
+   ### Risk Analysis
+
+    POST /api/v1/risk/analyze
+
+   ### Dashboard
+
+    GET /api/v1/dashboard/summary
+    GET /api/v1/dashboard/risk-activity
+    GET /api/v1/dashboard/risk-distribution
+    GET /api/v1/dashboard/recent-analyses
+
+   ### Risk Engine
+
+    The risk engine combines machine learning predictions with rule-based signals.
+
+    Examples of risk signals include:
+
+        New beneficiary
+        Unusually large transaction amount
+        Multiple recent transactions
+        Unusual destination country
+        Risky payment channel
+        ML fraud prediction
+        Suspicious links in messages
+        Requests for sensitive information
+        Urgent language
+        Suspicious email patterns
+
+    The risk engine returns:
+
+        Risk score
+        Risk level
+        Triggered rules
+        Recommended action
+
+    Recommended actions:
+
+        LOW risk    -> APPROVE
+        MEDIUM risk -> REVIEW
+        HIGH risk   -> BLOCK
+
+## Machine Learning Models
+
+    The repository contains trained model artifacts for:
+
+    Email spam detection:
+        ml/artifacts/email_spam/
+
+    SMS spam detection:
+        ml/artifacts/sms_spam/
+
+    Transaction fraud detection:
+        ml/artifacts/transactions/
+
+    URL model files are available under:
+
+        notebooks/URLs/
+
+    The notebooks and training scripts are available under:
+
+        notebooks/
+
+    Examples:
+
+        notebooks/Email/email_spam_classification.ipynb
+        notebooks/SMS/sms_spam_classification.ipynb
+        notebooks/URLs/url_classification.ipynb
+        notebooks/transactions/fraud_payment.ipynb
+
+## Data Pipeline
+
+    The data pipeline is organized into the following stages:
+
+        Ingestion
+            |
+        Cleaning
+            |
+        PII anonymization
+            |
+        Feature engineering
+            |
+        Validation
+            |
+        Database loading
+
+
+
+    The pipeline handles:
+
+        SMS and email ingestion
+        SpamAssassin email parsing
+        URL loading
+        Transaction generation
+        Message cleaning
+        URL cleaning
+        Transaction cleaning
+        PII anonymization
+        Feature extraction
+        Data validation
+        Database loading
+
+## Testing
+
+Run the test suite from the project root:
+
+    pytest
+
+Tests cover:
+
+    Content features
+    Content rules
+    Content scoring
+    Email analysis
+    SMS analysis
+    Transaction features
+    Transaction machine learning
+    Risk engine
+    Model services
+
+## Stop the Application
+
+Stop the containers without deleting database data:
+
+    docker compose down
+
+Stop the containers and delete local database volumes:
+
+    docker compose down -v
+
+Use docker compose down -v only when you intentionally want to delete the local PostgreSQL and pgAdmin data.
+
+## Git Workflow
+
+Create a personal feature branch:
+
+    git switch -c feature/your-feature-name
+
+Check the current status:
+
+    git status
+
+Commit changes:
+
+    git add .
+    git commit -m "Describe the change"
+
+Push the branch:
+
+    git push -u origin HEAD
+
+Create a Merge Request from your branch into dev.
+
+Do not commit:
+
+    .env
+    .venv/
+    __pycache__/
+    *.pyc
+    node_modules/
+    database volumes
+    API keys
+    passwords
+    private credentials

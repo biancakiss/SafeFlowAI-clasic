@@ -20,16 +20,25 @@ def determine_risk_level(rule_score: int) -> str:
 def calculate_risk(
     features: dict[str, Any],
     rules: list[dict[str, Any]] | None = None,
+    model_result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Calculate the explainable risk result for one transaction."""
+    """Calculate explainable risk using rules and optional ML output."""
+
     configured_rules = (
         DEFAULT_RISK_RULES
         if rules is None
         else rules
     )
 
+    scoring_features = dict(features)
+
+    if model_result is not None:
+        scoring_features["ml_predicted_fraud"] = int(
+            model_result.get("predicted_class") == "fraud"
+        )
+
     triggered_rules = evaluate_risk_rules(
-        features=features,
+        features=scoring_features,
         rules=configured_rules,
     )
 

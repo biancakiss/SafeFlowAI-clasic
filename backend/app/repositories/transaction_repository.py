@@ -95,6 +95,7 @@ def update_transaction_status(
 
     return transaction
 
+
 def get_user_transaction_by_external_id(
     db: Session,
     user_id: int,

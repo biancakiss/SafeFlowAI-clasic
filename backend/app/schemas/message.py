@@ -13,13 +13,15 @@ class MessageRequest(BaseModel):
         description="The message body",
     )
 
-    sender: str | None = Field(
-        default=None,
+    sender: str = Field(
+        ...,
+        min_length=1,
         max_length=255,
     )
 
-    receiver: str | None = Field(
-        default=None,
+    receiver: str = Field(
+        ...,
+        min_length=1,
         max_length=255,
     )
 
