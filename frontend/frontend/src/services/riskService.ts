@@ -56,7 +56,11 @@ export async function analyzePaymentMock(
     is_unusually_large: payment.amount >= 10_000 ? 1 : 0,
     is_unusual_country: knownCountries.has(payment.country) ? 0 : 1,
     is_risky_payment_channel:
-      /crypto|wire|api/i.test(payment.paymentChannel) ? 1 : 0,
+      /crypto|international_transfer|cash_withdrawal|wire|api/i.test(
+        payment.paymentChannel,
+      )
+        ? 1
+        : 0,
   }
 
   if (hiddenFeatures.is_unusually_large) {

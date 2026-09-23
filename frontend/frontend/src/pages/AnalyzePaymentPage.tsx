@@ -57,6 +57,14 @@ const initialForm: PaymentFormState = {
   description: '',
 }
 
+const paymentChannelOptions = [
+  { value: 'card', label: 'Card' },
+  { value: 'bank_transfer', label: 'Bank transfer' },
+  { value: 'international_transfer', label: 'International transfer' },
+  { value: 'cash_withdrawal', label: 'Cash withdrawal' },
+  { value: 'crypto', label: 'Crypto' },
+]
+
 const currencyOptions = [
   { code: 'AED', name: 'UAE Dirham' },
   { code: 'AUD', name: 'Australian Dollar' },
@@ -740,13 +748,11 @@ export function AnalyzePaymentPage() {
                 <MenuItem value="" disabled>
                   Select payment method
                 </MenuItem>
-                <MenuItem value="Bank Transfer (SWIFT)">
-                  Bank Transfer (SWIFT)
-                </MenuItem>
-                <MenuItem value="Online banking">Online banking</MenuItem>
-                <MenuItem value="Mobile banking">Mobile banking</MenuItem>
-                <MenuItem value="Wire transfer">Wire transfer</MenuItem>
-                <MenuItem value="Cryptocurrency">Cryptocurrency</MenuItem>
+                {paymentChannelOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </TextField>
 
               <TextField
