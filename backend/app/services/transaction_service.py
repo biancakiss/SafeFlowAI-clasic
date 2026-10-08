@@ -120,12 +120,14 @@ def _calculate_history_features(
         if transaction.created_at >= recent_window_start
     )
 
+    
+
     current_amount = float(data.amount)
 
-    if current_amount >= 1000:
-        is_unusually_large = 1
-    elif not user_history:
-        is_unusually_large = 0
+    if not user_history:
+        is_unusually_large = int(
+            current_amount >= 5000
+        )
     else:
         previous_amounts = [
             float(transaction.amount)
@@ -137,9 +139,17 @@ def _calculate_history_features(
             / len(previous_amounts)
         )
 
-        is_unusually_large = int(
-            current_amount > average_amount * 2
+        max_previous_amount = max(
+            previous_amounts
         )
+
+    is_unusually_large = int(
+        current_amount > max(
+            average_amount * 3,
+            max_previous_amount * 1.5,
+            5000,
+        )
+    )
 
     previous_countries = {
         transaction.beneficiary_country
