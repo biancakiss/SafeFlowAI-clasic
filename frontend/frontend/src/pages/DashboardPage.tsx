@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Box,
   Button,
   Card,
@@ -7,7 +6,6 @@ import {
   Chip,
   Alert,
   LinearProgress,
-  Rating,
   Stack,
   Table,
   TableBody,
@@ -24,7 +22,6 @@ import ReportProblemRoundedIcon from '@mui/icons-material/ReportProblemRounded'
 import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded'
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
-import FormatQuoteRoundedIcon from '@mui/icons-material/FormatQuoteRounded'
 import { LineChart } from '@mui/x-charts/LineChart'
 import {
   Link as RouterLink,
@@ -35,6 +32,7 @@ import { MetricCard } from '../components/common/MetricCard'
 import { PageHeader } from '../components/common/PageHeader'
 import { RiskLevelChip } from '../components/common/RiskLevelChip'
 import { ScamGlobeSection } from '../components/dashboard/ScamGlobeSection'
+import { DemoReviewsSection } from '../components/dashboard/DemoReviewsSection'
 import {
   globeLocations,
   riskTrend,
@@ -54,97 +52,6 @@ import type { Transaction } from '../types'
 const currency = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0,
 })
-
-type DemoReview = {
-  name: string
-  role: string
-  initials: string
-  rating: number
-  comment: string
-}
-
-const demoReviews: DemoReview[] = [
-  {
-    name: 'Laura Costea',
-    role: 'Senior Data Analyst',
-    initials: 'LC',
-    rating: 5,
-    comment:
-      'SafeFlow makes suspicious payments easy to review and keeps every risk signal in one clear place.',
-  },
-  {
-    name: 'Sebastian Sleam',
-    role: '.NET Developer',
-    initials: 'SS',
-    rating: 4.6,
-    comment:
-      'The transaction overview is fast to understand, even when several payments need attention at once.',
-  },
-  {
-    name: 'Iulia Alecu',
-    role: 'Senior Developer',
-    initials: 'IA',
-    rating: 5,
-    comment:
-      'The explainable risk decision helps our team approve or block a payment with confidence.',
-  },
-  {
-    name: 'Cosmin Petriuc',
-    role: 'Developer ',
-    initials: 'CP',
-    rating: 4.5,
-    comment:
-      'Message and URL analysis create a complete fraud-prevention workflow instead of showing only a score.',
-  },
-  {
-    name: 'Ferdinand Cabat',
-    role: 'Python Developer',
-    initials: 'FC',
-    rating: 5,
-    comment:
-      'The interface feels consistent and professional, while every case status remains easy to follow.',
-  },
-  {
-    name: 'Vlad Cicioc',
-    role: 'Payment reviewer',
-    initials: 'VC',
-    rating: 5,
-    comment:
-      'The visual risk levels help me prioritize reviews without losing the payment context behind them.',
-  },
-  {
-    name: 'Ionut Popescu',
-    role: 'Developer',
-    initials: 'IP',
-    rating: 4.6,
-    comment:
-      'A clean workspace for understanding how payment, message and URL risk checks work together.',
-  },
-  {
-    name: 'Raluca Hazi',
-    role: 'Senior Data Engineer',
-    initials: 'RH',
-    rating: 5,
-    comment:
-      'A clean workspace for understanding how payment, message and URL risk checks work together.',
-  },
-]
-
-const overallDemoRating = (
-  demoReviews.reduce((total, review) => total + review.rating, 0) /
-  demoReviews.length
-).toFixed(2)
-
-const reviewAvatarColors = [
-  '#0E9384',
-  '#3156D3',
-  '#14804A',
-  '#7656C9',
-  '#C06B24',
-  '#167C8C',
-  '#42526E',
-  '#E18A2D',
-]
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -659,189 +566,7 @@ export function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Box component="section" aria-labelledby="demo-reviews-title">
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'stretch', md: 'flex-end' },
-            justifyContent: 'space-between',
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          <Box>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.25,
-                flexWrap: 'wrap',
-              }}
-            >
-              <Typography id="demo-reviews-title" variant="h2">
-                What famous users say
-              </Typography>
-              <Chip
-                label="Feedback"
-                size="small"
-                variant="outlined"
-                sx={{
-                  color: '#087467',
-                  borderColor: 'rgba(14,147,132,0.35)',
-                  backgroundColor: 'rgba(14,147,132,0.06)',
-                }}
-              />
-            </Box>
-            <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-              Original feedback added to demonstrate the SafeFlow user experience.
-            </Typography>
-          </Box>
-
-          <Card
-            sx={{
-              width: { xs: '100%', md: 330 },
-              flexShrink: 0,
-              borderColor: 'rgba(14,147,132,0.22)',
-              background:
-                'linear-gradient(135deg, rgba(14,147,132,0.13), rgba(255,255,255,0.98))',
-            }}
-          >
-            <CardContent
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 2,
-                py: 2,
-                '&:last-child': { pb: 2 },
-              }}
-            >
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: 36, lineHeight: 1, fontWeight: 800 }}>
-                    {overallDemoRating}
-                  </Typography>
-                  <Typography color="text.secondary">/ 5</Typography>
-                </Box>
-                <Rating
-                  value={Number(overallDemoRating)}
-                  precision={0.01}
-                  readOnly
-                  size="small"
-                  sx={{ mt: 0.75, color: '#F4A62A' }}
-                />
-              </Box>
-              <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  Overall rating
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {demoReviews.length}  reviews
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, minmax(0, 1fr))',
-              lg: 'repeat(3, minmax(0, 1fr))',
-              xl: 'repeat(4, minmax(0, 1fr))',
-            },
-            gap: 2,
-          }}
-        >
-          {demoReviews.map((review, index) => (
-            <Card
-              key={review.name}
-              sx={{
-                height: '100%',
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'transform 160ms ease, box-shadow 160ms ease',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  inset: '0 auto 0 0',
-                  width: 4,
-                  backgroundColor: index % 2 === 0 ? '#0E9384' : '#64E2D2',
-                },
-                '&:hover': {
-                  transform: 'translateY(-3px)',
-                  boxShadow: '0 16px 34px rgba(20,39,64,0.11)',
-                },
-              }}
-            >
-              <CardContent
-                sx={{
-                  p: 2.5,
-                  pl: 3,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  '&:last-child': { pb: 2.5 },
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    justifyContent: 'space-between',
-                    gap: 1,
-                  }}
-                >
-                  <FormatQuoteRoundedIcon
-                    aria-hidden="true"
-                    sx={{ color: 'rgba(14,147,132,0.22)', fontSize: 38 }}
-                  />
-                  <Rating
-                    value={review.rating}
-                    precision={0.1}
-                    readOnly
-                    size="small"
-                    sx={{ color: '#F4A62A' }}
-                  />
-                </Box>
-
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 1.25, mb: 2.5, lineHeight: 1.7, flexGrow: 1 }}
-                >
-                  “{review.comment}”
-                </Typography>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                  <Avatar
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      fontSize: 14,
-                      fontWeight: 750,
-                      backgroundColor: reviewAvatarColors[index],
-                    }}
-                  >
-                    {review.initials}
-                  </Avatar>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 750 }} noWrap>
-                      {review.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {review.role}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          ))}
-        </Box>
-      </Box>
+      <DemoReviewsSection />
     </Stack>
   )
 }
