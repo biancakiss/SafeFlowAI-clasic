@@ -22,10 +22,23 @@ def calculate_url_risk(
     prediction: str,
     features: dict[str, Any],
 ) -> dict[str, Any]:
-    triggered_rules = []
+    triggered_rules : list[dict[str, Any]] = []
     risk_score = 0
 
-    if prediction == "suspicious":
+    normalized_prediction = str(
+        prediction
+    ).strip().lower()
+
+    suspicious_predictions = {
+        "suspicious",
+        "malicious",
+        "phishing",
+        "fraud",
+        "true",
+        "1",
+    }
+
+    if normalized_prediction in suspicious_predictions:
         risk_score += 70
 
         triggered_rules.append(
@@ -34,11 +47,10 @@ def calculate_url_risk(
                 "points": 70,
                 "reason": (
                     "The URL model classified "
-                    "the URL as suspicious."
+                    "the URL as malicious."
                 ),
             }
         )
-
     url_rules = [
         {
             "name": "http_connection",
@@ -100,6 +112,39 @@ def calculate_url_risk(
             "reason": (
                 "The URL contains an unusually "
                 "large number of subdomains."
+            ),
+        },
+        {
+            "name": "brand_impersonation",
+            "feature": "looks_like_brand_impersonation",
+            "points": 25,
+            "reason": (
+                "The domain appears to imitate "
+                "a known company or institution."
+            ),
+        },
+        {
+            "name": "long_url",
+            "feature": "has_long_url",
+            "points": 10,
+            "reason": "The URL is unusually long.",
+        },
+        {
+            "name": "many_hyphens",
+            "feature": "has_many_hyphens",
+            "points": 10,
+            "reason": (
+                "The domain contains an unusual "
+                "number of hyphens."
+            ),
+        },
+        {
+            "name": "encoded_url",
+            "feature": "contains_encoded_characters",
+            "points": 10,
+            "reason": (
+                "The URL contains encoded characters "
+                "that may hide its destination."
             ),
         },
     ]
