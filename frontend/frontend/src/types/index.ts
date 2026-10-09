@@ -135,6 +135,15 @@ export interface ScamRoute {
   summary: string
 }
 
+export interface DashboardReview {
+  id: string
+  name: string
+  role?: string
+  rating: number
+  text: string
+  createdAt: string
+}
+
 
 export type MessageClassification =
   | 'SAFE'

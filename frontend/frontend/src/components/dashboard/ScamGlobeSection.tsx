@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import {
   Box,
   Card,
-  Chip,
   CircularProgress,
   Divider,
   IconButton,
